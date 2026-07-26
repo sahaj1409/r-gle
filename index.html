@@ -17,18 +17,18 @@
         --border: #222222;
         --text: #F5F5F7; 
         --subtext: #8E8E93;
-        /* PREMIUM CHERRY WINE COLORWAY */
         --accent: #8C1534; 
         --accent-muted: rgba(140, 21, 52, 0.15);
         --accent-glow: rgba(140, 21, 52, 0.6);
         --safetv: max(env(safe-area-inset-top), 20px); 
-        --safebv: env(safe-area-inset-bottom, 30px);
+        --safebv: max(env(safe-area-inset-bottom), 30px);
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; margin: 0; padding: 0; }
     
     body {
-        background-color: var(--bg); color: var(--text);
+        background-color: #000000; /* Hardcoded to prevent white flash */
+        color: #F5F5F7;
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
         font-size: 16px; overscroll-behavior-y: none; overflow: hidden;
     }
@@ -37,21 +37,24 @@
     h3 { font-size: 20px; font-weight: 700; margin-bottom: 15px; }
     h4 { font-size: 13px; margin-bottom: 8px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800;}
 
-    /* BRANDING & BOOT */
-    #boot-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    /* BRANDING & FLUID BOOT SEQUENCE */
+    #boot-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 9998; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: opacity 0.6s ease; }
     
-    .brand-logo { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; color: var(--text); position: absolute; text-align: center; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1); font-size: 56px; text-shadow: 0 0 30px rgba(255,255,255,0.1); transition: all 0.9s cubic-bezier(0.8, 0, 0.2, 1); opacity: 0; z-index: 200; pointer-events: none;}
-    .brand-logo.header-mode { top: clamp(65px, calc(var(--safetv) + 25px), 100px); left: 50%; transform: translate(-50%, 0) scale(0.40); text-shadow: 0 0 20px var(--accent-glow); }
+    .brand-logo { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; color: var(--text); position: absolute; text-align: center; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); font-size: 56px; text-shadow: 0 0 40px rgba(255,255,255,0.05); transition: all 1.2s cubic-bezier(0.25, 1, 0.3, 1); opacity: 0; z-index: 9999; pointer-events: none;}
+    
+    .brand-logo.boot-active { opacity: 1; transform: translate(-50%, -50%) scale(1); text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+    
+    .brand-logo.header-mode { top: clamp(55px, calc(var(--safetv) + 25px), 90px); left: 50%; transform: translate(-50%, 0) scale(0.40); text-shadow: 0 0 15px var(--accent-glow); opacity: 1; transition: all 0.9s cubic-bezier(0.32, 0.72, 0, 1);}
 
     /* ANIMATIONS */
     .stagger-1 { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards; opacity: 0; }
-    .stagger-2 { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards; opacity: 0; }
-    .stagger-3 { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s forwards; opacity: 0; }
+    .stagger-2 { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.15s forwards; opacity: 0; }
+    .stagger-3 { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards; opacity: 0; }
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
     /* LAYOUT */
-    #app-container { height: 100vh; display: flex; flex-direction: column; opacity: 0; transition: opacity 0.6s ease; }
+    #app-container { height: 100vh; display: flex; flex-direction: column; opacity: 0; transition: opacity 0.8s ease; }
     .app-header { padding: calc(10px + var(--safetv)) 20px 10px 20px; height: calc(75px + var(--safetv)); display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .view-container { flex: 1; overflow-y: auto; padding: 20px 15px calc(110px + var(--safebv)) 15px; display: none; }
     .view-container.active { display: block; animation: popIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
@@ -60,11 +63,11 @@
     .ring-container { position: relative; width: 220px; height: 220px; margin: 10px auto 30px auto; }
     .cycle-svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible;}
     .ring-bg { fill: none; stroke: #1a1a1c; stroke-width: 12; }
-    .ring-period { fill: none; stroke: var(--accent); stroke-width: 12; stroke-dasharray: 565.48; stroke-dashoffset: 565.48; transition: stroke-dashoffset 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); filter: drop-shadow(0 0 12px var(--accent-glow)); stroke-linecap: round;}
+    .ring-period { fill: none; stroke: var(--accent); stroke-width: 12; stroke-dasharray: 565.48; stroke-dashoffset: 565.48; transition: stroke-dashoffset 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); filter: drop-shadow(0 0 10px var(--accent-glow)); stroke-linecap: round;}
     .ring-tracker { fill: none; stroke: #ffffff; stroke-width: 14; stroke-dasharray: 565.48; stroke-dashoffset: 565.48; transition: stroke-dashoffset 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); stroke-linecap: round;}
     .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; }
-    .ring-day { font-size: 52px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -2px; }
-    .ring-label { font-size: 13px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    .ring-day { font-size: 56px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -2px; }
+    .ring-label { font-size: 12px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
     /* COMPONENTS */
     .card { background-color: var(--card); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -73,7 +76,9 @@
     .btn:active { transform: scale(0.95); background: #2c2c2e; }
     .btn-main { background: var(--accent); color: white; border: none; font-size: 18px; font-weight: 700; padding: 20px; border-radius: 20px; width: 100%; box-shadow: 0 4px 20px var(--accent-glow); transition: transform 0.2s; }
     .btn-main:active { transform: scale(0.95); background: #6b0c26;}
-    input[type="date"] { width: 100%; padding: 20px; background: #1c1c1e; border: 1px solid var(--border); border-radius: 18px; color: var(--text); font-size: 18px; font-weight: 600; text-align: center; -webkit-appearance: none; font-family: inherit; }
+    
+    input[type="date"], input[type="number"] { width: 100%; padding: 20px; background: #1c1c1e; border: 1px solid var(--border); border-radius: 18px; color: var(--text); font-size: 18px; font-weight: 600; text-align: center; -webkit-appearance: none; font-family: inherit; margin-bottom: 20px;}
+    .input-label { color: var(--subtext); font-size: 12px; font-weight: 700; text-transform: uppercase; text-align: center; display: block; margin-bottom: 8px; letter-spacing: 1px; }
 
     /* CUSTOM ERASE MODAL */
     #erase-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 9999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; padding: 20px; }
@@ -108,17 +113,24 @@
     #toast { position: fixed; bottom: calc(100px + var(--safebv)); left: 50%; transform: translateX(-50%) translateY(50px); background: #2c2c2e; color: white; padding: 14px 24px; border-radius: 30px; font-size: 15px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.8); opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 9999; border: 1px solid #444;}
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* INSIGHTS / ANALYTICS UI */
+    /* MINIMAL INSIGHTS UI */
     .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #222; }
-    .prog-bar-bg { width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; margin-top: 8px; }
-    .prog-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; }
     .cycle-history-card { background: #161618; padding: 15px; border-radius: 16px; margin-bottom: 10px; border: 1px solid #2a2a2c; display: flex; justify-content: space-between; align-items: center; }
+
+    /* INTERACTIVE NATIVE SVG CHARTS */
+    .chart-container { width: 100%; height: 180px; position: relative; margin-top: 15px; margin-bottom: 5px; }
+    .svg-chart { width: 100%; height: 100%; overflow: visible; }
+    .chart-bar { fill: var(--accent); transition: height 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), y 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); rx: 4px; }
+    .chart-bar:hover { fill: #ff4d6d; }
+    .chart-axis { stroke: #333; stroke-width: 1; }
+    .chart-text { fill: var(--subtext); font-size: 10px; font-weight: 600; text-anchor: middle; font-family: inherit;}
+    .chart-avg-line { stroke: #8E8E93; stroke-width: 1; stroke-dasharray: 4 4; }
 
     details { background: #161618; border-radius: 20px; margin-bottom: 12px; border: 1px solid #2a2a2c; transition: all 0.3s;}
     summary { padding: 20px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; color: var(--text);}
     summary::-webkit-details-marker { display: none; }
-    summary::after { content: '↓'; color: var(--accent); font-size: 18px; font-weight: 800; transition: transform 0.3s;}
-    details[open] summary::after { transform: rotate(180deg); }
+    summary::after { content: '+'; color: var(--accent); font-size: 22px; font-weight: 400; transition: transform 0.3s;}
+    details[open] summary::after { transform: rotate(45deg); }
     .details-content { padding: 0 20px 20px 20px; font-size: 15px; color: #ccc; line-height: 1.6; }
 
     /* CALENDAR */
@@ -135,53 +147,60 @@
     .day.predicted::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background-color: var(--accent); border-radius: 50%; }
 </style>
 </head>
-<body>
+<body style="background-color: #000; color: #fff;">
 
-<!-- LOGO ANIMATION -->
+<!-- LOGO ANIMATION LAYER -->
 <div id="logo-layer" class="brand-logo">Règle</div>
 <div id="boot-screen"></div>
 
-<!-- ONBOARDING -->
-<div id="onboarding" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--bg); z-index:5000; padding:calc(80px + var(--safetv)) 20px 20px; display:none; flex-direction:column; opacity:0; transition:opacity 0.4s;">
-    <div style="text-align: center; margin-bottom: 40px;">
-        <h2>Initialize Engine</h2>
-        <p style="color: var(--subtext);">Select your mode to calibrate algorithms.</p>
+<!-- COMPREHENSIVE ONBOARDING -->
+<div id="onboarding" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--bg); z-index:5000; padding:calc(40px + var(--safetv)) 20px 20px; display:none; flex-direction:column; opacity:0; transition:opacity 0.4s; overflow-y:auto;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h2>Engine Setup</h2>
+        <p style="color: var(--subtext); font-size: 15px;">Configure biological baseline.</p>
     </div>
     
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
+    <label class="input-label">Select Profile</label>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
         <button class="btn" id="ob-her" onclick="haptic(1); obRole='woman'; document.getElementById('ob-her').style.borderColor='var(--accent)'; document.getElementById('ob-him').style.borderColor='#333';">👩 Personal</button>
         <button class="btn" id="ob-him" onclick="haptic(1); obRole='partner'; document.getElementById('ob-him').style.borderColor='var(--accent)'; document.getElementById('ob-her').style.borderColor='#333';">🤝 Partner</button>
     </div>
     
-    <label style="color:var(--subtext); font-size:13px; font-weight:700; text-transform:uppercase; text-align:center; display:block; margin-bottom:10px;">Last Period Start</label>
-    <input type="date" id="ob-date" style="margin-bottom: 40px;">
+    <!-- FUTURE DATE LOCKED -->
+    <label class="input-label">Last Period Start Date</label>
+    <input type="date" id="ob-date">
     
-    <button class="btn-main" style="margin-top: auto; margin-bottom: 20px;" onclick="haptic(2); finishOb()">Launch Règle</button>
+    <!-- BASELINE METRICS FOR IMMEDIATE ACCURACY -->
+    <label class="input-label">Usual Cycle Length (Days)</label>
+    <input type="number" id="ob-cycle" value="28" min="20" max="45">
+    
+    <label class="input-label">Usual Bleeding Length (Days)</label>
+    <input type="number" id="ob-period" value="5" min="2" max="10">
+    
+    <button class="btn-main" style="margin-top: 20px; margin-bottom: 40px;" onclick="haptic(2); finishOb()">Initialize Règle</button>
 </div>
 
-<!-- TOAST -->
+<!-- TOAST NOTIFICATION -->
 <div id="toast">Log Saved</div>
 
 <!-- ERASE CONFIRMATION MODAL -->
 <div id="erase-modal">
     <div class="modal-box">
-        <h2 style="margin-bottom: 10px; font-size: 24px;">Wait, are you sure? 🛑</h2>
-        <p style="color: var(--subtext); font-size: 15px; margin-bottom: 25px; line-height: 1.5;">This will permanently wipe your entire biological timeline and cycle history. There is no going back.</p>
+        <h2 style="margin-bottom: 10px; font-size: 24px;">Confirm Erase</h2>
+        <p style="color: var(--subtext); font-size: 15px; margin-bottom: 25px; line-height: 1.5;">This will permanently wipe your entire biological timeline and predictive history. This action cannot be reversed.</p>
         <div style="display: flex; gap: 10px; flex-direction: column;">
-            <button class="btn-main" style="background: #ff453a; box-shadow: 0 4px 20px rgba(255,69,58,0.3);" onclick="haptic(2); executeWipe()">Yes, Delete Everything</button>
-            <button class="btn" onclick="haptic(1); hideWipeModal()">Nevermind, Keep It</button>
+            <button class="btn-main" style="background: #ff453a; box-shadow: 0 4px 20px rgba(255,69,58,0.3);" onclick="haptic(2); executeWipe()">Erase Database</button>
+            <button class="btn" onclick="haptic(1); hideWipeModal()">Cancel</button>
         </div>
     </div>
 </div>
 
-<!-- APP -->
+<!-- MAIN APPLICATION -->
 <div id="app-container">
     <div class="app-header"></div>
 
-    <!-- TAB 1: TODAY / DASHBOARD -->
+    <!-- TAB 1: DASHBOARD -->
     <div class="view-container active" id="tab-today">
-        
-        <!-- CYCLE RING VISUALIZATION -->
         <div class="ring-container stagger-1">
             <svg class="cycle-svg" viewBox="0 0 200 200">
                 <circle class="ring-bg" cx="100" cy="100" r="90"></circle>
@@ -219,18 +238,15 @@
         </div>
     </div>
 
-    <!-- TAB 3: INSIGHTS (GEN-Z ADVANCED ANALYTICS) -->
+    <!-- TAB 3: INSIGHTS & NATIVE CHARTS -->
     <div class="view-container" id="tab-analysis">
-        <h2>Your Cycle Tea ☕️</h2>
+        <h2>Biological Insights</h2>
         
         <div style="text-align:center; margin-bottom:20px;">
             <span style="background:#1c1c1e; padding:6px 12px; border-radius:12px; font-size:12px; font-weight:700; color:var(--accent); border:1px solid var(--border);" id="engine-status">
                 Engine Calibrating...
             </span>
         </div>
-
-        <!-- NEW GEN-Z VIBE CHECK CARD -->
-        <div id="vibe-check-container"></div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
             <div class="card" style="text-align: center; padding: 25px 15px;">
@@ -243,15 +259,27 @@
             </div>
         </div>
 
+        <!-- NATIVE SVG BAR CHART: CYCLE LENGTH HISTORY -->
         <div class="card">
-            <h3 style="margin-bottom: 5px;">Your Usual Suspects</h3>
-            <p style="font-size:13px; color:var(--subtext); margin-bottom:20px;">The symptoms that pop up the most for you.</p>
-            <div id="symptom-distribution"></div>
+            <h3 style="margin-bottom: 5px;">Cycle Trends</h3>
+            <p style="font-size:13px; color:var(--subtext);">Historical variation in cycle duration.</p>
+            <div class="chart-container" id="cycle-chart-container">
+                <!-- SVG dynamically generated via JS -->
+            </div>
+        </div>
+
+        <!-- NATIVE SVG HORIZONTAL BAR: SYMPTOM DISTRIBUTION -->
+        <div class="card">
+            <h3 style="margin-bottom: 5px;">Symptom Profiling</h3>
+            <p style="font-size:13px; color:var(--subtext);">Frequency analysis of logged physical and mental symptoms.</p>
+            <div class="chart-container" style="height: auto; min-height: 150px;" id="symptom-chart-container">
+                <!-- SVG dynamically generated via JS -->
+            </div>
         </div>
 
         <div class="card">
-            <h3 style="margin-bottom: 5px;">The Archives</h3>
-            <p style="font-size:13px; color:var(--subtext); margin-bottom:20px;">Your biological timeline.</p>
+            <h3 style="margin-bottom: 5px;">Historical Archives</h3>
+            <p style="font-size:13px; color:var(--subtext); margin-bottom:20px;">Raw cycle records.</p>
             <div id="cycle-history-list"></div>
         </div>
     </div>
@@ -267,22 +295,21 @@
             </div>
         </div>
         <div class="card">
-            <h4 style="margin-bottom: 15px;">Danger Zone</h4>
-            <!-- UPDATED BUTTON TO TRIGGER CUSTOM MODAL -->
-            <button class="btn" style="color: #ff453a; border-color: rgba(255,69,58,0.3); background: rgba(255,69,58,0.05);" onclick="haptic(2); showWipeModal()">⚠️ Erase All Data</button>
+            <h4 style="margin-bottom: 15px;">Database Management</h4>
+            <button class="btn" style="color: #ff453a; border-color: rgba(255,69,58,0.3); background: rgba(255,69,58,0.05);" onclick="haptic(2); showWipeModal()">Erase Engine Data</button>
         </div>
     </div>
 </div>
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav" id="bottomNav">
-    <button class="nav-item active" onclick="switchTab('tab-today', this)"><div class="nav-icon">⨀</div>Today</button>
+    <button class="nav-item active" onclick="switchTab('tab-today', this)"><div class="nav-icon">⨀</div>Dashboard</button>
     <button class="nav-item" onclick="switchTab('tab-calendar', this)"><div class="nav-icon">🗓</div>Calendar</button>
-    <button class="nav-item" onclick="switchTab('tab-analysis', this)"><div class="nav-icon">✨</div>Insights</button>
+    <button class="nav-item" onclick="switchTab('tab-analysis', this)"><div class="nav-icon">📊</div>Insights</button>
     <button class="nav-item" onclick="switchTab('tab-settings', this)"><div class="nav-icon">⚙️</div>Settings</button>
 </nav>
 
-<!-- LOGGING DRAWER -->
+<!-- LOGGING DRAWER (FUTURE DATES LOCKED) -->
 <div class="drawer" id="logDrawer">
     <div class="drawer-header">
         <button class="back-btn" onclick="haptic(1); closeLayer()">← Back</button>
@@ -307,7 +334,7 @@
         </div>
 
         <div class="log-group">
-            <div class="log-title">🤕 Physical Vibe</div>
+            <div class="log-title">🤕 Physical</div>
             <div class="chip-grid" id="painSelect">
                 <button class="chip" data-val="Cramps"><span>⚡</span>Cramps</button>
                 <button class="chip" data-val="Headache"><span>🤕</span>Headache</button>
@@ -319,7 +346,7 @@
         </div>
 
         <div class="log-group">
-            <div class="log-title">🧠 Mental State</div>
+            <div class="log-title">🧠 Mind & Mood</div>
             <div class="chip-grid" id="moodSelect">
                 <button class="chip" data-val="Happy"><span>✨</span>Happy</button>
                 <button class="chip" data-val="Irritable"><span>😤</span>Irritable</button>
@@ -330,7 +357,7 @@
         </div>
 
         <div class="log-group">
-            <div class="log-title">🍕 Cravings & Gut</div>
+            <div class="log-title">🍕 Digestion & Cravings</div>
             <div class="chip-grid" id="digestionSelect">
                 <button class="chip" data-val="Sweet"><span>🍫</span>Sweet</button>
                 <button class="chip" data-val="Salty"><span>🍟</span>Salty</button>
@@ -361,32 +388,42 @@
     }
 
     /* ERASE MODAL LOGIC */
-    function showWipeModal() {
-        document.getElementById('erase-modal').classList.add('show');
-    }
-    function hideWipeModal() {
-        document.getElementById('erase-modal').classList.remove('show');
-    }
+    function showWipeModal() { document.getElementById('erase-modal').classList.add('show'); }
+    function hideWipeModal() { document.getElementById('erase-modal').classList.remove('show'); }
     function executeWipe() {
-        localStorage.removeItem('regle_db_v6');
-        localStorage.removeItem('regle_db_v5'); // Clear older versions too just in case
+        localStorage.clear();
         location.reload();
     }
 
-    /* THE BOOT SEQUENCE */
+    /* DYNAMIC DATE CONSTRAINTS (FUTURE BLOCKING) */
+    function setDateConstraints() {
+        // Today's date mapped dynamically
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('ob-date').max = today;
+        document.getElementById('logDate').max = today;
+    }
+
+    /* THE BOOT SEQUENCE (FLUID WHITE-BLINK FIX) */
     document.addEventListener('DOMContentLoaded', () => {
+        setDateConstraints();
         const logo = document.getElementById('logo-layer');
         const shield = document.getElementById('boot-screen');
         const app = document.getElementById('app-container');
         const ob = document.getElementById('onboarding');
 
-        logo.style.opacity = '1';
+        // Trigger Phase 1 Logo Animation (Fade in Center)
+        setTimeout(() => {
+            logo.classList.add('boot-active');
+        }, 50);
+
+        // Trigger Phase 2 Logo Animation (Move to Header)
         setTimeout(() => {
             logo.classList.add('header-mode');
             shield.style.opacity = '0';
+            
             setTimeout(() => {
                 shield.style.display = 'none';
-                const stored = localStorage.getItem('regle_db_v6');
+                const stored = localStorage.getItem('regle_db_v7');
                 if (stored) { 
                     appState = JSON.parse(stored); 
                     app.style.opacity = '1';
@@ -397,45 +434,44 @@
                     setTimeout(()=> ob.style.opacity = '1', 50);
                     document.getElementById('ob-date').value = new Date().toISOString().split('T')[0];
                 }
-            }, 800);
-        }, 1200);
+            }, 600); // Wait for fade shield
+        }, 1400); // Hold center logo
 
         setupInteractions();
-        document.getElementById('logDate').max = new Date().toISOString().split('T')[0];
     });
 
-    /* GEN-Z REWORKED BIOLOGICAL DATABASE */
+    /* CLINICAL, MINIMAL BIOLOGICAL DATABASE (STRIPPED OF GEN-Z SLANG) */
     const phaseDatabase = {
         menstrual: {
-            name: "Menstrual Phase ❄️", subtitle: "Goblin Mode Allowed",
-            her: `<details open><summary>The Tea ☕️</summary><div class="details-content">Hormones are at rock bottom right now. Your body is doing heavy lifting shedding the uterine lining. It's totally normal to feel fatigued and want to isolate.</div></details>
-                  <details><summary>The Blueprint</summary><div class="details-content">Go full cozy vibes. Swap HIIT for pilates or walking. Eat iron-rich foods (spinach, dark chocolate) and protect your peace. Say no to taxing social events.</div></details>`,
-            partner: `<details open><summary>Her Vibe Check</summary><div class="details-content">She is physically shedding tissue. Her energy is naturally depleted and she might be dealing with cramps. Less emotional bandwidth is expected.</div></details>
-                      <details><summary>Your Playbook</summary><div class="details-content">Take over the friction (cooking, chores). Bring warmth (tea, heating pad) without asking. Don't take low energy personally.</div></details>`
+            name: "Menstrual Phase", subtitle: "Days 1-5 • Baseline",
+            her: `<details open><summary>Biological State</summary><div class="details-content">Hormone levels (estrogen and progesterone) are at their lowest point in the cycle as the uterine lining sheds. Physical fatigue and lowered immune function are standard.</div></details>
+                  <details><summary>Protocol</summary><div class="details-content">Prioritize rest and hydration. Supplement iron and magnesium to offset cellular depletion. Limit strenuous cardiovascular output.</div></details>`,
+            partner: `<details open><summary>Biological Reality</summary><div class="details-content">Hormonal baseline is at its absolute lowest. Physical discomfort, fatigue, and reduced emotional bandwidth are biologically standard during this phase.</div></details>
+                      <details><summary>Action Plan</summary><div class="details-content">Assume physical household responsibilities. Provide heating implements and anti-inflammatory support without prompting. Maintain patience.</div></details>`
         },
         follicular: {
-            name: "Follicular Phase 🌱", subtitle: "Main Character Energy",
-            her: `<details open><summary>The Tea ☕️</summary><div class="details-content">Estrogen has entered the chat. Brain fog is clearing, optimism is returning, and your physical stamina is peaking as your body preps an egg.</div></details>
-                  <details><summary>The Blueprint</summary><div class="details-content">This is your time to shine. Push yourself at the gym, tackle complex projects, and socialize. Your skin usually looks its best right now.</div></details>`,
-            partner: `<details open><summary>Her Vibe Check</summary><div class="details-content">Estrogen is giving her a massive boost in energy, confidence, and clarity. She is biologically wired to be outgoing right now.</div></details>
-                      <details><summary>Your Playbook</summary><div class="details-content">Plan active dates. Engage in deep conversations. Match her rising energy and hype her up.</div></details>`
+            name: "Follicular Phase", subtitle: "Days 6-13 • Ascent",
+            her: `<details open><summary>Biological State</summary><div class="details-content">Estrogen steadily rises as ovarian follicles mature. This triggers increased neurological clarity, higher energy levels, and enhanced physical stamina.</div></details>
+                  <details><summary>Protocol</summary><div class="details-content">Optimal window for heavy physical exertion (HIIT, strength training) and complex cognitive tasks. Capitalize on increased sociability and endurance.</div></details>`,
+            partner: `<details open><summary>Biological Reality</summary><div class="details-content">Rising estrogen creates a natural elevation in energy, mood, and sociability. Cognitive function is highly optimized.</div></details>
+                      <details><summary>Action Plan</summary><div class="details-content">Ideal timeframe for active planning, socialization, and engaging in complex discussions. Support her increased physical output.</div></details>`
         },
         ovulation: {
-            name: "Ovulation Phase ☀️", subtitle: "Peak Magnetism",
-            her: `<details open><summary>The Tea ☕️</summary><div class="details-content">Estrogen peaks and an egg is released. You are biologically at your most charismatic, confident, and magnetic.</div></details>`,
-            partner: `<details open><summary>Her Vibe Check</summary><div class="details-content">Peak hormones. She is glowing, highly social, and feeling attractive.</div></details>
-                      <details><summary>Your Playbook</summary><div class="details-content">Take her out on a nice date. Compliment her genuinely. Celebrate her wins.</div></details>`
+            name: "Ovulation Phase", subtitle: "Days 14-16 • Peak",
+            her: `<details open><summary>Biological State</summary><div class="details-content">Estrogen reaches its absolute peak, triggering the release of an egg. Core body temperature slightly elevates. Sociability and physical endurance are maximized.</div></details>`,
+            partner: `<details open><summary>Biological Reality</summary><div class="details-content">Estrogen peaks. This is characterized by highly elevated mood, sociability, and physical energy levels.</div></details>
+                      <details><summary>Action Plan</summary><div class="details-content">Maximize engagement. Plan significant social or active events to align with her peak biological energy state.</div></details>`
         },
         luteal: {
-            name: "Luteal Phase 🍂", subtitle: "Cozy & Cravings",
-            her: `<details open><summary>The Tea ☕️</summary><div class="details-content">Progesterone is rising, giving you the urge to "nest." Later in the phase, hormones crash, which triggers PMS, bloating, and emotional sensitivity.</div></details>
-                  <details><summary>The Blueprint</summary><div class="details-content">Listen to your body. Cravings are literally biological (your metabolism speeds up). Eat complex carbs, shift to low-impact workouts, and prioritize sleep.</div></details>`,
-            partner: `<details open><summary>Her Vibe Check</summary><div class="details-content">Progesterone is making her sleepy and prone to nesting. The sudden hormone drop later causes emotional vulnerability and physical bloating.</div></details>
-                      <details><summary>Your Playbook</summary><div class="details-content">Patience is mandatory. Do not start unnecessary arguments. Order her favorite comfort food and validate her feelings without trying to "fix" them.</div></details>`
+            name: "Luteal Phase", subtitle: "Days 17-28 • Descent",
+            her: `<details open><summary>Biological State</summary><div class="details-content">Progesterone becomes the dominant hormone, slowing digestion and raising basal body temperature. As hormones inevitably crash pre-menstruation, PMS symptoms (bloating, fatigue) emerge.</div></details>
+                  <details><summary>Protocol</summary><div class="details-content">Metabolic rate increases natively (causing cravings). Focus on complex carbohydrates. Transition physical output to low-impact (yoga, pilates) to manage systemic fatigue.</div></details>`,
+            partner: `<details open><summary>Biological Reality</summary><div class="details-content">Progesterone induces natural lethargy. The subsequent steep drop in hormones triggers physiological bloating and heightened emotional sensitivity.</div></details>
+                      <details><summary>Action Plan</summary><div class="details-content">Avoid escalating conflict. Accommodate increased caloric/comfort needs. Provide a low-stress environment and validate emotional responses.</div></details>`
         }
     };
 
-    /* APP STATE */
+    /* ADVANCED APP STATE */
     let appState = { role: 'woman', calcCycle: 28, calcPeriod: 5, logs: [] };
     let currentCalDate = new Date();
     let selectedData = { flow: 'None', pain: [], mood: [], digestion: [] };
@@ -445,9 +481,18 @@
     function finishOb() {
         appState.role = obRole;
         const d = document.getElementById('ob-date').value;
-        if(d) appState.logs.push({date: d, timestamp: new Date(d).getTime(), flow: 'Medium', pain:[], mood:[], digestion:[]});
+        const baselineCycle = parseInt(document.getElementById('ob-cycle').value) || 28;
+        const baselinePeriod = parseInt(document.getElementById('ob-period').value) || 5;
+
+        // Apply manual baselines
+        appState.calcCycle = baselineCycle;
+        appState.calcPeriod = baselinePeriod;
+
+        if(d) {
+            appState.logs.push({date: d, timestamp: new Date(d).getTime(), flow: 'Medium', pain:[], mood:[], digestion:[]});
+        }
         
-        localStorage.setItem('regle_db_v6', JSON.stringify(appState));
+        localStorage.setItem('regle_db_v7', JSON.stringify(appState));
         
         document.getElementById('onboarding').style.opacity = '0';
         setTimeout(() => {
@@ -460,7 +505,7 @@
 
     function switchRole(role) { 
         appState.role = role; 
-        localStorage.setItem('regle_db_v6', JSON.stringify(appState));
+        localStorage.setItem('regle_db_v7', JSON.stringify(appState));
         refreshUI(); 
     }
 
@@ -530,6 +575,14 @@
     function saveLog() {
         const d = document.getElementById('logDate').value;
         if (!d) return;
+        
+        // Final security check: prevent future date injection
+        const today = new Date().toISOString().split('T')[0];
+        if (d > today) {
+            showToast('Cannot log future dates.');
+            return;
+        }
+
         appState.logs = appState.logs.filter(l => l.date !== d);
         
         if (selectedData.flow !== 'None' || selectedData.pain.length || selectedData.mood.length || selectedData.digestion.length) {
@@ -537,7 +590,7 @@
             appState.logs.sort((a, b) => b.timestamp - a.timestamp);
         }
         
-        localStorage.setItem('regle_db_v6', JSON.stringify(appState));
+        localStorage.setItem('regle_db_v7', JSON.stringify(appState));
         showToast('Log Saved');
         closeLayer();
     }
@@ -553,7 +606,7 @@
         
         for (let i = 1; i < flowLogs.length; i++) {
             const diffDays = (flowLogs[i].timestamp - flowLogs[i-1].timestamp) / 86400000;
-            if (diffDays > 5) {
+            if (diffDays > 5) { // Gap indicates new cycle
                 currentCycle.cycleLen = (flowLogs[i].timestamp - currentCycle.start.timestamp) / 86400000;
                 cycleHistoryData.push(currentCycle);
                 currentCycle = { start: flowLogs[i], periodLen: 1, cycleLen: null };
@@ -561,7 +614,7 @@
                 currentCycle.periodLen = Math.max(currentCycle.periodLen, Math.floor((flowLogs[i].timestamp - currentCycle.start.timestamp)/86400000) + 1);
             }
         }
-        cycleHistoryData.push(currentCycle);
+        cycleHistoryData.push(currentCycle); // Push ongoing
 
         let totalCycle = 0, validCycles = 0;
         let totalPeriod = 0, validPeriods = 0;
@@ -577,8 +630,9 @@
             }
         });
 
-        if (validCycles > 0) appState.calcCycle = Math.round(totalCycle / validCycles);
-        if (validPeriods > 0) appState.calcPeriod = Math.round(totalPeriod / validPeriods);
+        // Only override baseline if we have enough real valid historical data
+        if (validCycles >= 1) appState.calcCycle = Math.round(totalCycle / validCycles);
+        if (validPeriods >= 1) appState.calcPeriod = Math.round(totalPeriod / validPeriods);
         
         if(appState.calcCycle < 21) appState.calcCycle = 28;
         if(appState.calcPeriod > 10) appState.calcPeriod = 5;
@@ -605,7 +659,7 @@
         }
 
         renderCalendar();
-        renderInsights(dayOfCycle);
+        renderInsights();
     }
 
     /* SVG RING MATH */
@@ -641,43 +695,63 @@
         `;
     }
 
-    /* DEEP ANALYTICS & GEN-Z INSIGHTS RENDERER */
-    function renderInsights(currentDay) {
+    /* DEEP ANALYTICS & NATIVE SVG CHARTS RENDERER */
+    function renderInsights() {
         document.getElementById('stat-cycle').innerText = appState.calcCycle;
         document.getElementById('stat-period').innerText = appState.calcPeriod;
 
-        const totalTracked = cycleHistoryData.length;
+        const totalTracked = cycleHistoryData.filter(c => c.cycleLen !== null).length;
         const statusEl = document.getElementById('engine-status');
-        if (totalTracked <= 1) {
-            statusEl.innerText = "Engine Learning (Need More Data)";
+        if (totalTracked < 1) {
+            statusEl.innerText = "Engine Operating on Baselines (Need Historical Data)";
             statusEl.style.color = "#ff9f0a";
         } else {
-            statusEl.innerText = `Calibrated with ${totalTracked} Cycles`;
+            statusEl.innerText = `Engine Calibrated with ${totalTracked} Recorded Cycles`;
             statusEl.style.color = "#30D158";
         }
 
-        // Gen-Z Current Vibe Card
-        let phaseKey = 'luteal';
-        let vibeIcon = '🍂', vibeTitle = "Luteal Phase", vibeText = "Progesterone is high. If you're feeling tired or craving carbs, it's literally just science. Protect your peace and chill out.";
-        if (currentDay >= 1 && currentDay <= appState.calcPeriod) {
-            phaseKey = 'menstrual'; vibeIcon = '❄️'; vibeTitle = "Menstrual Phase"; vibeText = "Hormones are at rock bottom. Your body is doing a lot of work right now. Full goblin mode is authorized.";
-        } else if (currentDay > appState.calcPeriod && currentDay <= 13) {
-            phaseKey = 'follicular'; vibeIcon = '🌱'; vibeTitle = "Follicular Phase"; vibeText = "Estrogen is entering the chat. Energy levels are up. Time to hit the gym, socialize, and romanticize your life.";
-        } else if (currentDay >= 14 && currentDay <= 16) {
-            phaseKey = 'ovulation'; vibeIcon = '☀️'; vibeTitle = "Ovulation Phase"; vibeText = "Estrogen is peaking. You're giving main character energy right now. Your skin and confidence should be glowing.";
+        // ==========================================
+        // BUILD NATIVE SVG CHART 1: CYCLE TRENDS
+        // ==========================================
+        const cycleChartContainer = document.getElementById('cycle-chart-container');
+        const completedCycles = cycleHistoryData.filter(c => c.cycleLen !== null).slice(-6); // Last 6 cycles
+        
+        if (completedCycles.length === 0) {
+            cycleChartContainer.innerHTML = `<div style="text-align:center; color:var(--subtext); padding-top:40px;">Insufficient historical data to graph trends.</div>`;
+        } else {
+            const w = cycleChartContainer.clientWidth || 300;
+            const h = 180;
+            const padding = 30;
+            const maxVal = Math.max(...completedCycles.map(c => c.cycleLen), 45); // Scale to at least 45
+            
+            let svgHTML = `<svg class="svg-chart" viewBox="0 0 ${w} ${h}">`;
+            
+            // Draw Average Line
+            const avgY = h - padding - (appState.calcCycle / maxVal) * (h - padding * 2);
+            svgHTML += `<line x1="${padding}" y1="${avgY}" x2="${w}" y2="${avgY}" class="chart-avg-line"></line>`;
+            svgHTML += `<text x="${w - 10}" y="${avgY - 5}" class="chart-text" style="fill:var(--accent); text-anchor:end;">Avg ${appState.calcCycle}</text>`;
+            
+            // Draw Bars
+            const barWidth = (w - padding * 2) / completedCycles.length - 10;
+            completedCycles.forEach((c, i) => {
+                const barHeight = (c.cycleLen / maxVal) * (h - padding * 2);
+                const x = padding + 10 + i * (barWidth + 10);
+                const y = h - padding - barHeight;
+                
+                // Animate Y and Height by rendering them at 0 then letting CSS transition them (done instantly here for math precision)
+                svgHTML += `
+                    <rect class="chart-bar" x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="4"></rect>
+                    <text class="chart-text" x="${x + barWidth/2}" y="${h - 10}">C${i+1}</text>
+                    <text class="chart-text" x="${x + barWidth/2}" y="${y - 8}" style="fill:var(--text);">${c.cycleLen}</text>
+                `;
+            });
+            svgHTML += `</svg>`;
+            cycleChartContainer.innerHTML = svgHTML;
         }
 
-        document.getElementById('vibe-check-container').innerHTML = `
-            <div class="card card-highlight" style="display:flex; align-items:center; gap: 15px;">
-                <div style="font-size: 40px; line-height:1;">${vibeIcon}</div>
-                <div>
-                    <h4 style="margin-bottom:4px; color:var(--text);">Current Vibe: ${vibeTitle}</h4>
-                    <p style="font-size:14px; color:var(--subtext); line-height:1.4;">${vibeText}</p>
-                </div>
-            </div>
-        `;
-
-        // Symptom Distribution Engine
+        // ==========================================
+        // BUILD NATIVE SVG CHART 2: SYMPTOM DIST.
+        // ==========================================
         let sympCounts = {};
         let totalLogs = 0;
         appState.logs.forEach(l => {
@@ -686,29 +760,31 @@
             allSymp.forEach(s => { sympCounts[s] = (sympCounts[s] || 0) + 1; });
         });
 
-        const sortedSymp = Object.entries(sympCounts).sort((a,b) => b[1] - a[1]).slice(0, 4);
+        const sortedSymp = Object.entries(sympCounts).sort((a,b) => b[1] - a[1]).slice(0, 5); // Top 5
+        const sympContainer = document.getElementById('symptom-chart-container');
         
-        let sympHTML = "";
         if (sortedSymp.length === 0) {
-            sympHTML = "<div style='color:var(--subtext); font-size:14px;'>No vibe data logged yet. Start tracking to unlock.</div>";
+            sympContainer.innerHTML = `<div style="text-align:center; color:var(--subtext); padding-top:20px;">No symptom tracking data logged yet.</div>`;
         } else {
-            sortedSymp.forEach(([name, count]) => {
+            const h = sortedSymp.length * 35;
+            let barHTML = `<svg width="100%" height="${h}">`;
+            
+            sortedSymp.forEach(([name, count], index) => {
                 const perc = Math.round((count / totalLogs) * 100);
-                sympHTML += `
-                <div class="stat-row">
-                    <div style="flex:1;">
-                        <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:600;">
-                            <span>${name}</span>
-                            <span style="color:var(--accent);">${perc}%</span>
-                        </div>
-                        <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${perc}%;"></div></div>
-                    </div>
-                </div>`;
+                const y = index * 35;
+                
+                barHTML += `
+                    <text class="chart-text" x="0" y="${y + 15}" style="fill:var(--text); text-anchor:start;">${name}</text>
+                    <text class="chart-text" x="100%" y="${y + 15}" style="fill:var(--accent); text-anchor:end;">${perc}%</text>
+                    <rect x="0" y="${y + 22}" width="100%" height="6" fill="#222" rx="3"></rect>
+                    <rect x="0" y="${y + 22}" width="${perc}%" height="6" fill="var(--accent)" rx="3"></rect>
+                `;
             });
+            barHTML += `</svg>`;
+            sympContainer.innerHTML = barHTML;
         }
-        document.getElementById('symptom-distribution').innerHTML = sympHTML;
 
-        // Cycle History Timeline
+        // Cycle History Text List
         let historyHTML = "";
         const reversedHistory = [...cycleHistoryData].reverse(); 
         
@@ -718,13 +794,13 @@
             reversedHistory.forEach((c, index) => {
                 const dateStr = new Date(c.start.date).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
                 const isCurrent = index === 0 && !c.cycleLen;
-                const lengthDisplay = isCurrent ? "Current" : `${c.cycleLen} Days`;
+                const lengthDisplay = isCurrent ? "Active" : `${c.cycleLen} Days`;
                 
                 historyHTML += `
                 <div class="cycle-history-card">
                     <div>
                         <div style="font-weight:700; font-size:16px;">${dateStr}</div>
-                        <div style="font-size:12px; color:var(--subtext); margin-top:4px;">Bleeding: ${c.periodLen} Days</div>
+                        <div style="font-size:12px; color:var(--subtext); margin-top:4px;">Bleeding Length: ${c.periodLen} Days</div>
                     </div>
                     <div style="font-weight:800; font-size:18px; color:${isCurrent ? 'var(--accent)' : 'var(--text)'};">
                         ${lengthDisplay}
@@ -752,7 +828,7 @@
         
         const todayStr = new Date().toISOString().split('T')[0];
         
-        // Predictions
+        // Mathematical Predictions Overlay
         let predictedSet = new Set();
         const flows = appState.logs.filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => b.timestamp - a.timestamp);
         if(flows.length > 0) {
@@ -769,11 +845,16 @@
         for (let i = 1; i <= daysInMonth; i++) {
             const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
             let cls = 'day current-month';
+            
+            // Apply visual indicators based on logical state
             if (dStr === todayStr) cls += ' today';
             if (appState.logs.find(l => l.date === dStr && l.flow !== 'None')) cls += ' logged';
-            if (predictedSet.has(dStr)) cls += ' predicted';
+            if (predictedSet.has(dStr) && dStr > todayStr) cls += ' predicted'; // Only predict future
             
-            cal.innerHTML += `<div class="${cls}" onclick="haptic(1); openLayer('logDrawer'); document.getElementById('logDate').value='${dStr}'; loadLog('${dStr}');">${i}</div>`;
+            // Allow logging only for past/present dates
+            let clickEvent = dStr <= todayStr ? `onclick="haptic(1); openLayer('logDrawer'); document.getElementById('logDate').value='${dStr}'; loadLog('${dStr}');"` : `onclick="showToast('Cannot log future dates.'); haptic();" style="opacity:0.6;"`;
+            
+            cal.innerHTML += `<div class="${cls}" ${clickEvent}>${i}</div>`;
         }
     }
 </script>
