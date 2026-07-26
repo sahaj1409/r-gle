@@ -1,0 +1,21 @@
+{
+  "name": "Règle",
+  "short_name": "Règle",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "description": "Minimalist, offline-first period tracker.",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/C_Programming_Language.svg/512px-C_Programming_Language.svg.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/C_Programming_Language.svg/512px-C_Programming_Language.svg.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
