@@ -9,16 +9,17 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Règle</title>
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&display=swap');
+
     :root {
         --bg: #000000; 
         --card: #121212; 
-        --card-hover: #1a1a1c;
         --border: #222222;
         --text: #F5F5F7; 
         --subtext: #8E8E93;
-        --accent: #D2042D; /* Cherry Red */
+        --accent: #D2042D; 
         --accent-muted: rgba(210, 4, 45, 0.15);
-        --accent-glow: rgba(210, 4, 45, 0.3);
+        --accent-glow: rgba(210, 4, 45, 0.5);
         --ovulation: #30D158;
         --safetv: env(safe-area-inset-top, 40px); 
         --safebv: env(safe-area-inset-bottom, 30px);
@@ -29,168 +30,190 @@
     body {
         background-color: var(--bg); color: var(--text);
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-        font-size: 17px; letter-spacing: -0.4px; 
-        overscroll-behavior-y: none; overflow: hidden;
+        font-size: 16px; overscroll-behavior-y: none; overflow: hidden;
     }
 
-    h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.5px; }
-    h1 { font-size: 34px; margin-bottom: 5px; }
-    h2 { font-size: 28px; margin-bottom: 15px; }
-    h3 { font-size: 20px; margin-bottom: 15px; }
-    h4 { font-size: 16px; margin-bottom: 8px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;}
+    h2 { font-size: 28px; font-weight: 800; margin-bottom: 15px; letter-spacing: -0.5px; }
+    h3 { font-size: 20px; font-weight: 700; margin-bottom: 15px; }
+    h4 { font-size: 13px; margin-bottom: 8px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800;}
 
-    /* APP LAYOUT */
-    #app-container { height: 100vh; display: flex; flex-direction: column; opacity: 1; transition: opacity 0.4s ease; }
-    
-    .app-header {
-        padding: calc(15px + var(--safetv)) 20px 10px 20px;
-        display: flex; align-items: center; justify-content: space-between;
-        background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-        border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 100;
-    }
-    .header-title { font-size: 24px; font-weight: 700; }
-    
-    .back-btn {
-        background: none; border: none; color: var(--accent); font-size: 28px;
-        display: none; align-items: center; cursor: pointer; padding: 0 15px 0 0;
-    }
-    .back-btn span { font-size: 17px; font-weight: 600; margin-left: 4px; line-height: 1;}
+    /* BRANDING & BOOT */
+    #boot-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .brand-logo { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; color: var(--text); position: absolute; text-align: center; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1); font-size: 56px; text-shadow: 0 0 30px rgba(255,255,255,0.1); transition: all 0.9s cubic-bezier(0.8, 0, 0.2, 1); opacity: 0; }
+    .brand-logo.header-mode { top: calc(var(--safetv) + 12px); left: 50%; transform: translate(-50%, 0) scale(0.40); text-shadow: 0 0 15px var(--accent-glow); }
 
-    .view-container { flex: 1; overflow-y: auto; padding: 20px 15px calc(100px + var(--safebv)) 15px; display: none; animation: fadeIn 0.3s ease forwards;}
-    .view-container.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    /* ANIMATIONS */
+    .stagger-1 { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards; opacity: 0; }
+    .stagger-2 { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards; opacity: 0; }
+    .stagger-3 { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s forwards; opacity: 0; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-    /* CARDS & UI */
-    .card { background-color: var(--card); border-radius: 24px; padding: 22px; margin-bottom: 20px; border: 1px solid var(--border); }
-    .hero-card { text-align: center; padding: 35px 20px; background: linear-gradient(180deg, #160205 0%, #000000 100%); border-color: var(--accent-muted); }
-    .hero-days { font-size: 76px; font-weight: 800; color: var(--accent); line-height: 1; margin: 10px 0; text-shadow: 0 4px 30px var(--accent-glow); letter-spacing: -2px;}
-    .hero-label { color: var(--subtext); text-transform: uppercase; font-size: 13px; letter-spacing: 1.5px; font-weight: 700;}
+    /* LAYOUT */
+    #app-container { height: 100vh; display: flex; flex-direction: column; opacity: 0; transition: opacity 0.6s ease; }
+    .app-header { padding: calc(10px + var(--safetv)) 20px 10px 20px; height: calc(55px + var(--safetv)); display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .view-container { flex: 1; overflow-y: auto; padding: 20px 15px calc(110px + var(--safebv)) 15px; display: none; }
+    .view-container.active { display: block; animation: popIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
 
-    .btn { background: #242426; border: 1px solid #333; color: var(--text); padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; text-align: center; transition: all 0.2s;}
-    .btn:active { transform: scale(0.96); }
-    .btn-main { background: var(--accent); color: white; border: none; font-size: 18px; font-weight: 700; box-shadow: 0 4px 20px var(--accent-glow); margin-top: 10px;}
+    /* THE CYCLE RING (CLUE-STYLE) */
+    .ring-container { position: relative; width: 220px; height: 220px; margin: 20px auto 30px auto; }
+    .cycle-svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible;}
+    .ring-bg { fill: none; stroke: #1a1a1c; stroke-width: 12; }
+    .ring-period { fill: none; stroke: var(--accent); stroke-width: 12; stroke-dasharray: 565.48; stroke-dashoffset: 565.48; transition: stroke-dashoffset 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); filter: drop-shadow(0 0 8px var(--accent-glow)); stroke-linecap: round;}
+    .ring-tracker { fill: none; stroke: #ffffff; stroke-width: 14; stroke-dasharray: 565.48; stroke-dashoffset: 565.48; transition: stroke-dashoffset 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); stroke-linecap: round;}
+    .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; }
+    .ring-day { font-size: 52px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -2px; }
+    .ring-label { font-size: 13px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* COMPONENTS */
+    .card { background-color: var(--card); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .btn { background: #1c1c1e; border: 1px solid #333; color: var(--text); padding: 18px; border-radius: 18px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; text-align: center; transition: all 0.2s; -webkit-appearance: none;}
+    .btn:active { transform: scale(0.95); background: #2c2c2e; }
+    .btn-main { background: var(--accent); color: white; border: none; font-size: 18px; font-weight: 700; padding: 20px; border-radius: 20px; width: 100%; box-shadow: 0 4px 20px var(--accent-glow); transition: transform 0.2s; }
     .btn-main:active { transform: scale(0.95); background: #b00325;}
-
-    input[type="date"], input[type="number"] { width: 100%; padding: 18px; background: #1a1a1c; border: 1px solid var(--border); border-radius: 16px; color: var(--text); font-size: 18px; font-weight: 500; margin-bottom: 15px; -webkit-appearance: none; font-family: inherit;}
+    
+    input[type="date"] { width: 100%; padding: 20px; background: #1c1c1e; border: 1px solid var(--border); border-radius: 18px; color: var(--text); font-size: 18px; font-weight: 600; text-align: center; -webkit-appearance: none; font-family: inherit; }
 
     /* BOTTOM NAV */
-    .bottom-nav {
-        position: fixed; bottom: 0; left: 0; width: 100%;
-        background-color: rgba(10, 10, 10, 0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-        padding: 15px 10px calc(15px + var(--safebv)) 10px;
-        border-top: 1px solid rgba(255,255,255,0.05); z-index: 100;
-        display: flex; justify-content: space-around; transition: transform 0.4s ease;
-    }
-    .nav-item { background: none; border: none; color: var(--subtext); font-size: 11px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 25%;}
-    .nav-item.active { color: var(--accent); }
-    .nav-icon { font-size: 24px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(10, 10, 10, 0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 15px 10px calc(15px + var(--safebv)) 10px; border-top: 1px solid rgba(255,255,255,0.05); z-index: 100; display: flex; justify-content: space-around; transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+    .nav-item { background: none; border: none; color: var(--subtext); font-size: 11px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 25%; transition: color 0.2s;}
+    .nav-item.active { color: var(--text); }
+    .nav-icon { font-size: 24px; transition: transform 0.3s; opacity: 0.5;}
+    .nav-item.active .nav-icon { opacity: 1; transform: translateY(-2px); filter: drop-shadow(0 2px 8px rgba(255,255,255,0.3));}
 
-    /* EXPANDABLE SECTIONS (The "Tons of info" styling) */
-    details { background: #1a1a1c; border-radius: 16px; margin-bottom: 10px; overflow: hidden; border: 1px solid #333;}
-    summary { padding: 18px; font-weight: 600; font-size: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; color: var(--text);}
+    /* LOGGING DRAWER (PREMIUM MULTI-SELECT) */
+    .drawer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 2000; transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); display: flex; flex-direction: column; }
+    .drawer.open { transform: translateY(0); }
+    .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: calc(15px + var(--safetv)) 20px 15px 20px; background: rgba(0,0,0,0.9); border-bottom: 1px solid var(--border); z-index: 10; }
+    .back-btn { background: #1c1c1e; border: 1px solid #333; color: var(--text); padding: 10px 16px; border-radius: 20px; font-size: 15px; font-weight: 600; display: flex; align-items: center; cursor: pointer; transition: transform 0.2s; }
+    .back-btn:active { transform: scale(0.9); }
+    .drawer-content { flex: 1; overflow-y: auto; padding-bottom: calc(100px + var(--safebv)); }
+
+    .log-group { margin-bottom: 30px; }
+    .log-title { font-size: 13px; color: var(--subtext); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin: 0 20px 12px 20px; }
+    .chip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; padding: 0 20px; }
+    .chip { background: #1c1c1e; border: 1px solid #2a2a2c; padding: 15px 10px; border-radius: 18px; font-size: 14px; font-weight: 600; color: var(--text); transition: 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; align-items: center; gap: 8px;}
+    .chip span { font-size: 24px; }
+    .chip:active { transform: scale(0.92); }
+    .chip.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 4px 15px var(--accent-glow); transform: scale(1.05); }
+
+    /* TOAST NOTIFICATION */
+    #toast { position: fixed; bottom: calc(100px + var(--safebv)); left: 50%; transform: translateX(-50%) translateY(50px); background: #2c2c2e; color: white; padding: 14px 24px; border-radius: 30px; font-size: 15px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.8); opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 9999; border: 1px solid #444;}
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* EXPANDABLE INSIGHTS */
+    details { background: #161618; border-radius: 20px; margin-bottom: 12px; border: 1px solid #2a2a2c; transition: all 0.3s;}
+    summary { padding: 20px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; color: var(--text);}
     summary::-webkit-details-marker { display: none; }
-    summary::after { content: '+'; color: var(--accent); font-size: 24px; font-weight: 300; line-height: 0; transition: transform 0.2s;}
-    details[open] summary::after { transform: rotate(45deg); }
-    details[open] summary { border-bottom: 1px solid #333; background: #222;}
-    .details-content { padding: 18px; font-size: 15px; color: #ccc; line-height: 1.5; background: #151515;}
-    .details-content ul { padding-left: 20px; margin-top: 10px; }
-    .details-content li { margin-bottom: 8px; }
+    summary::after { content: '↓'; color: var(--accent); font-size: 18px; font-weight: 800; transition: transform 0.3s;}
+    details[open] summary::after { transform: rotate(180deg); }
+    .details-content { padding: 0 20px 20px 20px; font-size: 15px; color: #aaa; line-height: 1.6; }
 
-    /* DRAWERS & LOGGING */
-    .drawer {
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: var(--bg); z-index: 200;
-        transform: translateX(100%); transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
-        display: flex; flex-direction: column;
-    }
-    .drawer.open { transform: translateX(0); }
-    
-    .log-category { font-size: 13px; color: var(--accent); text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin: 25px 20px 10px 20px; }
-    .scroll-row { display: flex; overflow-x: auto; gap: 10px; padding: 0 20px 10px 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;}
-    .scroll-row::-webkit-scrollbar { display: none; }
-    .chip { flex: 0 0 auto; background: #1a1a1c; border: 1px solid #333; padding: 12px 20px; border-radius: 20px; font-size: 15px; font-weight: 500; color: var(--text); transition: 0.2s; scroll-snap-align: start;}
-    .chip.active { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow);}
-
-    /* CALENDAR (Compact for space) */
-    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .cal-nav { background: none; border: none; color: var(--accent); font-size: 20px;}
-    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
-    .weekday { color: var(--subtext); font-size: 13px; font-weight: 600; padding-bottom: 5px; }
-    .day { height: 40px; display: flex; align-items: center; justify-content: center; font-size: 16px; border-radius: 12px; color: #444; font-weight: 500; position: relative;}
+    /* CALENDAR */
+    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .cal-nav { background: #1c1c1e; border: none; color: var(--text); width: 44px; height: 44px; border-radius: 50%; font-size: 18px; display:flex; align-items:center; justify-content:center; cursor: pointer;}
+    .cal-nav:active { background: #2c2c2e; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
+    .weekday { color: var(--subtext); font-size: 12px; font-weight: 800; padding-bottom: 8px; text-transform: uppercase;}
+    .day { height: 44px; display: flex; align-items: center; justify-content: center; font-size: 16px; border-radius: 50%; color: #444; font-weight: 600; position: relative; transition: transform 0.2s;}
+    .day:active { transform: scale(0.8); }
     .day.current-month { color: var(--text); }
-    .day.today { background-color: #2c2c2e; font-weight: 800;}
+    .day.today { background-color: #2c2c2e; }
     .day.logged { background-color: var(--accent-muted); color: var(--accent); font-weight: 800; border: 1px solid var(--accent-glow);}
-    .day.predicted::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background-color: var(--accent); border-radius: 50%; opacity: 0.5; }
+    .day.predicted::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background-color: var(--accent); border-radius: 50%; }
 </style>
 </head>
 <body>
 
-<!-- ONBOARDING (Simplified for this file, assumes you set it up previously, defaults to prompt) -->
-<div id="onboarding" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:5000; padding:40px 20px; display:none;">
-    <h2>Setup Règle</h2>
-    <label class="hero-label">Your Role</label>
-    <div style="display:flex; gap:10px; margin-top:10px; margin-bottom: 20px;">
-        <button class="btn" id="ob-her" onclick="obRole='woman'; this.style.borderColor='var(--accent)'">Her (Personal)</button>
-        <button class="btn" id="ob-him" onclick="obRole='partner'; this.style.borderColor='var(--accent)'">Partner</button>
+<!-- LOGO ANIMATION -->
+<div id="logo-layer" class="brand-logo">Règle</div>
+<div id="boot-screen"></div>
+
+<!-- ONBOARDING -->
+<div id="onboarding" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--bg); z-index:5000; padding:calc(80px + var(--safetv)) 20px 20px; display:none; flex-direction:column; opacity:0; transition:opacity 0.4s;">
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h2>Initialize Engine</h2>
+        <p style="color: var(--subtext);">Select mode to calibrate algorithms.</p>
     </div>
-    <label class="hero-label">Last Period Start Date</label>
-    <input type="date" id="ob-date" style="margin-top:10px; margin-bottom: 30px;">
-    <button class="btn-main" onclick="finishOb()">Launch Règle</button>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
+        <button class="btn" id="ob-her" onclick="haptic(1); obRole='woman'; document.getElementById('ob-her').style.borderColor='var(--accent)'; document.getElementById('ob-him').style.borderColor='#333';">👩 Personal</button>
+        <button class="btn" id="ob-him" onclick="haptic(1); obRole='partner'; document.getElementById('ob-him').style.borderColor='var(--accent)'; document.getElementById('ob-her').style.borderColor='#333';">🤝 Partner</button>
+    </div>
+    
+    <label style="color:var(--subtext); font-size:13px; font-weight:700; text-transform:uppercase; text-align:center; display:block; margin-bottom:10px;">Last Period Start</label>
+    <input type="date" id="ob-date" style="margin-bottom: 40px;">
+    
+    <button class="btn-main" style="margin-top: auto; margin-bottom: 20px;" onclick="haptic(2); finishOb()">Start Tracking</button>
 </div>
 
-<!-- MAIN APP -->
-<div id="app-container">
-    <div class="app-header">
-        <button class="back-btn" id="global-back" onclick="closeLayer()">← <span>Back</span></button>
-        <div class="header-title" id="header-title">Today</div>
-        <div style="width: 40px;"></div>
-    </div>
+<!-- TOAST -->
+<div id="toast">Log Saved</div>
 
-    <!-- TAB 1: TODAY / DEEP DIVE -->
+<!-- APP -->
+<div id="app-container">
+    <div class="app-header"></div>
+
+    <!-- TAB 1: TODAY / DASHBOARD -->
     <div class="view-container active" id="tab-today">
-        <div class="card hero-card">
-            <div class="hero-label" id="heroLabel">Next Period</div>
-            <div class="hero-days" id="heroDays">--</div>
-            <div class="hero-label" style="color: var(--text); font-weight: 500;" id="heroDate">Awaiting Data</div>
+        
+        <!-- CYCLE RING VISUALIZATION -->
+        <div class="ring-container stagger-1">
+            <svg class="cycle-svg" viewBox="0 0 200 200">
+                <!-- Background track -->
+                <circle class="ring-bg" cx="100" cy="100" r="90"></circle>
+                <!-- Period indicator (red zone) -->
+                <circle class="ring-period" id="svg-period" cx="100" cy="100" r="90"></circle>
+                <!-- Current day tracker (white line) -->
+                <circle class="ring-tracker" id="svg-tracker" cx="100" cy="100" r="90"></circle>
+            </svg>
+            <div class="ring-text">
+                <div class="ring-day" id="heroDays">--</div>
+                <div class="ring-label" id="heroLabel">Awaiting Data</div>
+            </div>
         </div>
 
-        <button class="btn-main" style="width: 100%; margin-bottom: 25px; border-radius: 20px; padding: 22px;" onclick="openLayer('logDrawer', 'Daily Log')">
-            Log Today's Data
+        <button class="btn-main stagger-2" style="margin-bottom: 30px;" onclick="openLayer('logDrawer')">
+            + Log Today
         </button>
 
-        <!-- DYNAMIC CONTENT INJECTED HERE BASED ON ROLE & PHASE -->
-        <div id="dynamic-phase-content"></div>
+        <div id="dynamic-phase-content" class="stagger-3"></div>
     </div>
 
     <!-- TAB 2: CALENDAR -->
     <div class="view-container" id="tab-calendar">
+        <h2>Calendar</h2>
         <div class="card">
             <div class="cal-header">
-                <button class="cal-nav" onclick="changeMonth(-1)">❮</button>
-                <h2 id="calMonthYear" style="margin:0; font-size: 20px;">Month</h2>
-                <button class="cal-nav" onclick="changeMonth(1)">❯</button>
+                <button class="cal-nav" onclick="haptic(1); changeMonth(-1)">❮</button>
+                <h3 id="calMonthYear" style="margin:0;">Month</h3>
+                <button class="cal-nav" onclick="haptic(1); changeMonth(1)">❯</button>
             </div>
             <div class="cal-grid" id="weekdayHeader"></div>
             <div class="cal-grid" id="calDays"></div>
         </div>
+        <div style="display:flex; justify-content:center; gap:15px; font-size:13px; color:var(--subtext);">
+            <div style="display:flex; align-items:center; gap:5px;"><div style="width:12px; height:12px; border-radius:50%; background:var(--accent-muted); border:1px solid var(--accent);"></div> Logged</div>
+            <div style="display:flex; align-items:center; gap:5px;"><div style="width:6px; height:6px; border-radius:50%; background:var(--accent);"></div> Predicted</div>
+        </div>
     </div>
 
-    <!-- TAB 3: INSIGHTS -->
+    <!-- TAB 3: INSIGHTS (ANALYTICS ENGINE) -->
     <div class="view-container" id="tab-analysis">
-        <h2 style="margin-bottom: 20px;">Cycle Insights</h2>
+        <h2>Biological Analysis</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-            <div class="card" style="text-align: center; padding: 15px;">
-                <div style="font-size: 28px; font-weight: 800; margin-bottom: 5px;" id="stat-cycle">--</div>
-                <div class="hero-label">Avg Cycle</div>
+            <div class="card" style="text-align: center; padding: 25px 15px;">
+                <div style="font-size: 36px; font-weight: 800; margin-bottom: 5px; color:var(--text);" id="stat-cycle">--</div>
+                <div style="font-size: 12px; color:var(--subtext); text-transform:uppercase; font-weight:700; letter-spacing:1px;">Avg Cycle</div>
             </div>
-            <div class="card" style="text-align: center; padding: 15px;">
-                <div style="font-size: 28px; font-weight: 800; margin-bottom: 5px;" id="stat-period">--</div>
-                <div class="hero-label">Avg Period</div>
+            <div class="card" style="text-align: center; padding: 25px 15px;">
+                <div style="font-size: 36px; font-weight: 800; margin-bottom: 5px; color:var(--accent);" id="stat-period">--</div>
+                <div style="font-size: 12px; color:var(--subtext); text-transform:uppercase; font-weight:700; letter-spacing:1px;">Avg Period</div>
             </div>
         </div>
         <div class="card">
-            <h3>Recent Logs</h3>
-            <div id="historyList" style="font-size: 14px; color: var(--subtext);">No data yet.</div>
+            <h3 style="margin-bottom: 15px;">Recent Logs</h3>
+            <div id="historyList" style="font-size: 15px; color: var(--subtext);">No data yet.</div>
         </div>
     </div>
 
@@ -198,219 +221,242 @@
     <div class="view-container" id="tab-settings">
         <h2>Settings</h2>
         <div class="card">
-            <h3>Switch Mode</h3>
+            <h4 style="margin-bottom: 15px;">Active Profile</h4>
             <div style="display: flex; gap: 10px;">
-                <button class="btn" onclick="switchRole('woman')">Personal</button>
-                <button class="btn" onclick="switchRole('partner')">Partner</button>
+                <button class="btn" id="set-her" onclick="haptic(1); switchRole('woman')">👩 Personal</button>
+                <button class="btn" id="set-him" onclick="haptic(1); switchRole('partner')">🤝 Partner</button>
             </div>
         </div>
         <div class="card">
-            <h3>Data</h3>
-            <button class="btn" style="margin-bottom: 10px;" onclick="wipeData()">Erase All Data</button>
+            <h4 style="margin-bottom: 15px;">Data Control</h4>
+            <button class="btn" style="color: #ff453a; border-color: rgba(255,69,58,0.3); background: rgba(255,69,58,0.05);" onclick="haptic(2); wipeData()">⚠️ Erase All Data</button>
         </div>
     </div>
 </div>
 
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav" id="bottomNav">
-    <button class="nav-item active" onclick="switchTab('tab-today', 'Today', this)"><span class="nav-icon">⦿</span> Today</button>
-    <button class="nav-item" onclick="switchTab('tab-calendar', 'Calendar', this)"><span class="nav-icon">📅</span> Calendar</button>
-    <button class="nav-item" onclick="switchTab('tab-analysis', 'Insights', this)"><span class="nav-icon">📊</span> Insights</button>
-    <button class="nav-item" onclick="switchTab('tab-settings', 'Settings', this)"><span class="nav-icon">⚙️</span> Settings</button>
+    <button class="nav-item active" onclick="switchTab('tab-today', this)"><div class="nav-icon">⨀</div>Today</button>
+    <button class="nav-item" onclick="switchTab('tab-calendar', this)"><div class="nav-icon">🗓</div>Calendar</button>
+    <button class="nav-item" onclick="switchTab('tab-analysis', this)"><div class="nav-icon">📈</div>Insights</button>
+    <button class="nav-item" onclick="switchTab('tab-settings', this)"><div class="nav-icon">⚙️</div>Settings</button>
 </nav>
 
-<!-- EXTENDED LOGGING DRAWER -->
+<!-- LOGGING DRAWER (CLUE/FLO STYLE MULTI-GRID) -->
 <div class="drawer" id="logDrawer">
-    <div style="flex: 1; overflow-y: auto; padding-bottom: calc(100px + var(--safebv)); padding-top: calc(15px + var(--safetv));">
-        
-        <div style="padding: 0 20px;"><input type="date" id="logDate"></div>
-
-        <div class="log-category">Bleeding / Flow</div>
-        <div class="scroll-row" id="flowSelect">
-            <div class="chip" data-val="None">None</div>
-            <div class="chip" data-val="Spotting">Spotting</div>
-            <div class="chip" data-val="Light">Light</div>
-            <div class="chip" data-val="Medium">Medium</div>
-            <div class="chip" data-val="Heavy">Heavy</div>
-        </div>
-
-        <div class="log-category">Physical Symptoms</div>
-        <div class="scroll-row multi" id="painSelect">
-            <div class="chip" data-val="Cramps">Cramps</div>
-            <div class="chip" data-val="Tender Breasts">Tender Breasts</div>
-            <div class="chip" data-val="Headache">Headache</div>
-            <div class="chip" data-val="Bloating">Bloating</div>
-            <div class="chip" data-val="Fatigue">Fatigue</div>
-            <div class="chip" data-val="Acne">Acne</div>
-        </div>
-
-        <div class="log-category">Mind & Mood</div>
-        <div class="scroll-row multi" id="moodSelect">
-            <div class="chip" data-val="Calm">Calm</div>
-            <div class="chip" data-val="Happy">Happy</div>
-            <div class="chip" data-val="Irritable">Irritable</div>
-            <div class="chip" data-val="Sad">Sad</div>
-            <div class="chip" data-val="Anxious">Anxious</div>
-            <div class="chip" data-val="Brain Fog">Brain Fog</div>
-        </div>
-
-        <div class="log-category">Digestion & Cravings</div>
-        <div class="scroll-row multi" id="digestionSelect">
-            <div class="chip" data-val="Sweet Cravings">Sweet Cravings</div>
-            <div class="chip" data-val="Salty Cravings">Salty Cravings</div>
-            <div class="chip" data-val="Nausea">Nausea</div>
-            <div class="chip" data-val="Gassy">Gassy</div>
-        </div>
-        
+    <div class="drawer-header">
+        <button class="back-btn" onclick="haptic(1); closeLayer()">← Back</button>
+        <div style="font-weight: 700; font-size: 18px;">Daily Log</div>
+        <div style="width: 70px;"></div>
+    </div>
+    
+    <div class="drawer-content">
         <div style="padding: 20px;">
-            <button class="btn-main" style="width: 100%; border-radius: 20px; padding: 20px;" onclick="saveLog()">Save Daily Log</button>
+            <input type="date" id="logDate">
+        </div>
+
+        <div class="log-group">
+            <div class="log-title">🩸 Bleeding</div>
+            <div class="chip-grid" id="flowSelect">
+                <button class="chip" data-val="None"><span>🚫</span>None</button>
+                <button class="chip" data-val="Spotting"><span>🩸</span>Spot</button>
+                <button class="chip" data-val="Light"><span>💧</span>Light</button>
+                <button class="chip" data-val="Medium"><span>💦</span>Med</button>
+                <button class="chip" data-val="Heavy"><span>🌊</span>Heavy</button>
+            </div>
+        </div>
+
+        <div class="log-group">
+            <div class="log-title">🤕 Physical</div>
+            <div class="chip-grid" id="painSelect">
+                <button class="chip" data-val="Cramps"><span>⚡</span>Cramps</button>
+                <button class="chip" data-val="Headache"><span>🤕</span>Headache</button>
+                <button class="chip" data-val="Bloating"><span>🎈</span>Bloating</button>
+                <button class="chip" data-val="Fatigue"><span>🥱</span>Fatigue</button>
+                <button class="chip" data-val="Tender"><span>🌸</span>Tender</button>
+                <button class="chip" data-val="Acne"><span>🌋</span>Acne</button>
+            </div>
+        </div>
+
+        <div class="log-group">
+            <div class="log-title">🧠 Mind & Mood</div>
+            <div class="chip-grid" id="moodSelect">
+                <button class="chip" data-val="Happy"><span>✨</span>Happy</button>
+                <button class="chip" data-val="Irritable"><span>😤</span>Irritable</button>
+                <button class="chip" data-val="Sad"><span>🌧️</span>Sad</button>
+                <button class="chip" data-val="Anxious"><span>🌪️</span>Anxious</button>
+                <button class="chip" data-val="Brain Fog"><span>☁️</span>Fog</button>
+            </div>
+        </div>
+
+        <div class="log-group">
+            <div class="log-title">🍕 Digestion & Cravings</div>
+            <div class="chip-grid" id="digestionSelect">
+                <button class="chip" data-val="Sweet"><span>🍫</span>Sweet</button>
+                <button class="chip" data-val="Salty"><span>🍟</span>Salty</button>
+                <button class="chip" data-val="Nausea"><span>🤢</span>Nausea</button>
+            </div>
+        </div>
+        
+        <div style="padding: 20px 20px 40px 20px;">
+            <button class="btn-main" onclick="haptic(2); saveLog()">Save Daily Log</button>
         </div>
     </div>
 </div>
 
 <script>
-    /* MASSIVE BIOLOGICAL & ACTION DATA REPOSITORY */
+    /* HAPTIC ENGINE */
+    // type 1 = light tap, type 2 = heavy tap
+    function haptic(type = 1) {
+        if (navigator.vibrate) {
+            if (type === 1) navigator.vibrate(30); 
+            else navigator.vibrate([40, 30, 40]); 
+        }
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    /* THE BOOT SEQUENCE */
+    document.addEventListener('DOMContentLoaded', () => {
+        const logo = document.getElementById('logo-layer');
+        const shield = document.getElementById('boot-screen');
+        const app = document.getElementById('app-container');
+        const ob = document.getElementById('onboarding');
+
+        logo.style.opacity = '1';
+        setTimeout(() => {
+            logo.classList.add('header-mode');
+            shield.style.opacity = '0';
+            setTimeout(() => {
+                shield.style.display = 'none';
+                const stored = localStorage.getItem('regle_db_v4');
+                if (stored) { 
+                    appState = JSON.parse(stored); 
+                    app.style.opacity = '1';
+                    engineCalculate();
+                    refreshUI();
+                } else { 
+                    ob.style.display = 'flex';
+                    setTimeout(()=> ob.style.opacity = '1', 50);
+                    document.getElementById('ob-date').value = new Date().toISOString().split('T')[0];
+                }
+            }, 800);
+        }, 1200);
+
+        setupInteractions();
+        document.getElementById('logDate').max = new Date().toISOString().split('T')[0];
+    });
+
+    /* INTELLIGENT BIOLOGICAL DATABASE */
     const phaseDatabase = {
         menstrual: {
-            name: "Menstrual Phase",
-            subtitle: "Days 1-5 • The Winter Phase",
-            her: `
-                <details open><summary>Hormonal State</summary><div class="details-content">Estrogen and progesterone plunge to their lowest levels. This drop triggers the shedding of the uterine lining. You might feel a significant drop in physical and mental energy. Focus on rest.</div></details>
-                <details><summary>Nutrition & Cravings</summary><div class="details-content">Iron levels are dropping. <ul><li>Eat: Iron-rich foods (spinach, red meat, lentils).</li><li>Eat: Vitamin C (citrus, bell peppers) to help absorb iron.</li><li>Avoid: Extremely salty foods to reduce bloating, and heavy caffeine which can worsen cramps.</li></ul></div></details>
-                <details><summary>Movement & Exercise</summary><div class="details-content">Your body is working hard natively. Do not push for PRs at the gym. Stick to light stretching, restorative yoga, or short, gentle walks. Sleep is your best workout right now.</div></details>
-                <details><summary>Self-Care Focus</summary><div class="details-content">Keep your lower abdomen warm with a heating pad to relax uterine muscles. Allow yourself to be antisocial without guilt. Journaling or reading is highly recommended.</div></details>
-            `,
-            partner: `
-                <details open><summary>Her Biological Reality</summary><div class="details-content">Her body is literally shedding tissue. Hormones are at rock bottom, meaning she is naturally fatigued, physically sore (cramps, backache), and may have less emotional bandwidth.</div></details>
-                <details><summary>Actionable Support Plan</summary><div class="details-content">Step up physically. <ul><li>Cook meals without asking "what do you want?".</li><li>Take over household chores (dishes, trash).</li><li>Keep the house quiet and low-stress.</li></ul></div></details>
-                <details><summary>Emotional Playbook</summary><div class="details-content">Do not take a lack of enthusiasm personally. If she's quiet or irritable, it's physiological, not a reflection of your relationship. Validate her discomfort.</div></details>
-                <details><summary>Quick Care Gestures</summary><div class="details-content"><ul><li>Bring her a hot water bottle / heating pad without being asked.</li><li>Make her a warm, decaf tea (peppermint or ginger).</li><li>Offer a gentle lower back massage.</li></ul></div></details>
-            `
+            name: "Menstrual Phase", subtitle: "The Winter Phase",
+            her: `<details open><summary>Biological State</summary><div class="details-content">Hormones are at their lowest. The uterine lining is shedding. Energy and immune function drop. Focus entirely on rest, hydration, and warmth.</div></details>
+                  <details><summary>Action Plan</summary><div class="details-content">Prioritize iron and magnesium (spinach, dark chocolate). Light stretching only. Say no to taxing social events.</div></details>`,
+            partner: `<details open><summary>Her Reality</summary><div class="details-content">She is physically shedding tissue. Energy is depleted and she may be in pain.</div></details>
+                      <details><summary>Your Playbook</summary><div class="details-content">Take over household friction (cooking, cleaning). Bring warmth (tea, heating pad) without asking. Be patient.</div></details>`
         },
         follicular: {
-            name: "Follicular Phase",
-            subtitle: "Days 6-13 • The Spring Phase",
-            her: `
-                <details open><summary>Hormonal State</summary><div class="details-content">Estrogen is rising steadily, and testosterone starts a slow climb. This is your body preparing an egg. You will notice a sharp return of energy, brain clarity, and optimism.</div></details>
-                <details><summary>Nutrition & Cravings</summary><div class="details-content">Your metabolism naturally slows slightly here, but energy is high. <ul><li>Eat: Fresh, light foods, salads, fermented foods (kimchi, kombucha) to support gut health as estrogen rises.</li><li>Focus on lean proteins to sustain your new energy.</li></ul></div></details>
-                <details><summary>Movement & Exercise</summary><div class="details-content">Time to push it. Your pain tolerance is higher and stamina is peaking. Great time for HIIT, heavy weight lifting, running, and trying new, intense workout classes.</div></details>
-                <details><summary>Productivity Focus</summary><div class="details-content">Your brain is primed for learning and socializing. Schedule important meetings, start new complex projects, and socialize heavily. You are at your most charismatic.</div></details>
-            `,
-            partner: `
-                <details open><summary>Her Biological Reality</summary><div class="details-content">Rising estrogen means she is likely feeling energized, confident, and highly social. The brain fog is gone. She is physically and mentally hitting her stride for the month.</div></details>
-                <details><summary>Actionable Support Plan</summary><div class="details-content">Keep up with her energy! <ul><li>This is the perfect week to plan active dates (hiking, concerts).</li><li>Brainstorm ideas or tackle complex life admin together.</li></ul></div></details>
-                <details><summary>Emotional Playbook</summary><div class="details-content">Engage with her ideas. She will likely be more talkative and visionary right now. Be an active listener and match her enthusiastic energy.</div></details>
-            `
+            name: "Follicular Phase", subtitle: "The Spring Phase",
+            her: `<details open><summary>Biological State</summary><div class="details-content">Estrogen rises sharply. Brain fog clears, optimism returns, and physical stamina peaks as your body prepares an egg.</div></details>
+                  <details><summary>Action Plan</summary><div class="details-content">Push yourself physically (HIIT, heavy lifting). Tackle complex mental tasks. Be social.</div></details>`,
+            partner: `<details open><summary>Her Reality</summary><div class="details-content">Estrogen is giving her a massive boost in energy, confidence, and clarity.</div></details>
+                      <details><summary>Your Playbook</summary><div class="details-content">Plan active dates. Engage in deep conversations. Match her rising energy.</div></details>`
         },
         ovulation: {
-            name: "Ovulation Phase",
-            subtitle: "Days 14-16 • The Summer Phase",
-            her: `
-                <details open><summary>Hormonal State</summary><div class="details-content">Estrogen and testosterone hit their absolute peak before dropping sharply. An egg is released. You likely feel extremely confident, attractive, and have a peaked libido.</div></details>
-                <details><summary>Movement & Exercise</summary><div class="details-content">You have maximum strength right now, but ligaments can be slightly looser due to estrogen. Lift heavy, do high-energy cardio, but ensure your form is perfect to avoid injury.</div></details>
-                <details><summary>Social & Mindset</summary><div class="details-content">Your verbal fluency is at its peak. This is the time to negotiate a raise, have difficult but necessary conversations, or go to big social events. You are glowing.</div></details>
-            `,
-            partner: `
-                <details open><summary>Her Biological Reality</summary><div class="details-content">Peak hormones. She is biologically wired right now to be social, confident, and her libido is likely at its highest point in the cycle.</div></details>
-                <details><summary>Actionable Support Plan</summary><div class="details-content"><ul><li>Take her out. She likely wants to be seen and be social.</li><li>Initiate intimacy (if applicable to your relationship), as she is most biologically receptive now.</li></ul></div></details>
-                <details><summary>Quick Care Gestures</summary><div class="details-content">Compliment her. Notice her energy and tell her she looks great. Celebrate her wins this week.</div></details>
-            `
+            name: "Ovulation Phase", subtitle: "The Summer Phase",
+            her: `<details open><summary>Biological State</summary><div class="details-content">Estrogen peaks. An egg is released. You are at your most charismatic, confident, and biologically driven.</div></details>`,
+            partner: `<details open><summary>Her Reality</summary><div class="details-content">Peak hormones. She is glowing, social, and likely feeling highly attractive.</div></details>
+                      <details><summary>Your Playbook</summary><div class="details-content">Take her out. Compliment her. Celebrate her wins.</div></details>`
         },
         luteal: {
-            name: "Luteal Phase",
-            subtitle: "Days 17-28 • The Autumn Phase",
-            her: `
-                <details open><summary>Hormonal State</summary><div class="details-content">Progesterone becomes the dominant hormone, slowing things down. Midway through, if no pregnancy occurs, all hormones crash. This causes PMS symptoms: bloating, mood swings, and fatigue.</div></details>
-                <details><summary>Nutrition & Cravings</summary><div class="details-content">Your metabolism speeds up (burning ~100-300 extra calories), hence the cravings! <ul><li>Eat: Complex carbs (sweet potatoes, oats) to stabilize blood sugar and serotonin.</li><li>Eat: Magnesium-rich foods (dark chocolate) to fight cramps.</li></ul></div></details>
-                <details><summary>Movement & Exercise</summary><div class="details-content">Scale it back. As the phase progresses, switch from heavy lifting to pilates, strength maintenance, and long walks. Your core body temp is higher, so you will sweat faster.</div></details>
-                <details><summary>Self-Care Focus</summary><div class="details-content">Nesting instinct kicks in. Focus on wrapping up projects rather than starting new ones. Protect your peace, draw boundaries, and prioritize early bedtimes.</div></details>
-            `,
-            partner: `
-                <details open><summary>Her Biological Reality</summary><div class="details-content">Progesterone is making her sleepy and potentially anxious. As hormones crash later in this phase (PMS), she may experience bloating, tender breasts, and high emotional sensitivity.</div></details>
-                <details><summary>Actionable Support Plan</summary><div class="details-content">Tread lightly and be helpful. <ul><li>Do not start unnecessary arguments.</li><li>Let her rest. If she wants to cancel social plans to stay in, support that decision immediately.</li></ul></div></details>
-                <details><summary>Emotional Playbook</summary><div class="details-content">Patience is mandatory. She might feel overwhelmed easily. If she gets upset over something small, recognize it is the hormone drop magnifying her feelings. Validate, don't try to "fix" it with logic.</div></details>
-                <details><summary>Quick Care Gestures</summary><div class="details-content"><ul><li>Buy her favorite comfort snacks/chocolate without asking.</li><li>Suggest ordering takeout so she doesn't have to cook.</li><li>Offer to run her errands.</li></ul></div></details>
-            `
+            name: "Luteal Phase", subtitle: "The Autumn Phase",
+            her: `<details open><summary>Biological State</summary><div class="details-content">Progesterone rises, slowing digestion and increasing core temp. If not pregnant, hormones crash causing PMS (bloating, sensitivity).</div></details>
+                  <details><summary>Action Plan</summary><div class="details-content">Metabolism speeds up (hence cravings). Eat complex carbs. Shift to low-impact workouts like pilates. Protect your peace.</div></details>`,
+            partner: `<details open><summary>Her Reality</summary><div class="details-content">Progesterone is making her nest and feel sleepy. The sudden hormone drop causes emotional vulnerability.</div></details>
+                      <details><summary>Your Playbook</summary><div class="details-content">Do not start arguments. Order her favorite comfort food. Validate her feelings without trying to "fix" them.</div></details>`
         }
     };
 
-    /* STATE & CORE */
-    let appState = { role: 'woman', cycle: 28, period: 5, logs: [] };
+    /* APP STATE & ANALYTICS ENGINE */
+    let appState = { role: 'woman', calcCycle: 28, calcPeriod: 5, logs: [] };
     let currentCalDate = new Date();
-    let activeLayer = null; 
-    let previousTabTitle = "Today";
     let selectedData = { flow: 'None', pain: [], mood: [], digestion: [] };
     let obRole = 'woman';
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const stored = localStorage.getItem('regle_db_v2');
-        if (stored) { appState = JSON.parse(stored); } 
-        else { document.getElementById('onboarding').style.display = 'block'; }
-        
-        setupInteractions();
-        refreshUI();
-        document.getElementById('logDate').max = new Date().toISOString().split('T')[0];
-    });
 
     function finishOb() {
         appState.role = obRole;
         const d = document.getElementById('ob-date').value;
         if(d) appState.logs.push({date: d, timestamp: new Date(d).getTime(), flow: 'Medium', pain:[], mood:[], digestion:[]});
-        localStorage.setItem('regle_db_v2', JSON.stringify(appState));
-        document.getElementById('onboarding').style.display = 'none';
-        refreshUI();
+        
+        localStorage.setItem('regle_db_v4', JSON.stringify(appState));
+        
+        document.getElementById('onboarding').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('onboarding').style.display = 'none';
+            document.getElementById('app-container').style.opacity = '1';
+            engineCalculate();
+            refreshUI();
+        }, 400);
     }
 
-    function switchRole(role) { appState.role = role; refreshUI(); }
-    function wipeData() { if(confirm("Erase everything?")) { localStorage.clear(); location.reload(); } }
+    function switchRole(role) { 
+        appState.role = role; 
+        localStorage.setItem('regle_db_v4', JSON.stringify(appState));
+        refreshUI(); 
+    }
+    
+    function wipeData() { 
+        if(confirm("Permanently erase all cycle data?")) { localStorage.clear(); location.reload(); } 
+    }
 
     /* NAVIGATION */
-    function switchTab(tabId, title, btnElement) {
-        if(activeLayer) closeLayer();
+    function switchTab(tabId, btnElement) {
+        haptic(1);
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         btnElement.classList.add('active');
         document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
-        document.getElementById('header-title').innerText = title;
-        previousTabTitle = title;
         refreshUI();
     }
 
-    function openLayer(layerId, title) {
-        activeLayer = layerId;
+    function openLayer(layerId) {
+        haptic(1);
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('logDate').value = todayStr;
         loadLog(todayStr);
         document.getElementById('logDate').onchange = (e) => loadLog(e.target.value);
-
         document.getElementById(layerId).classList.add('open');
-        document.getElementById('header-title').innerText = title;
-        document.getElementById('global-back').style.display = 'flex';
         document.getElementById('bottomNav').style.transform = 'translateY(150%)';
     }
 
     function closeLayer() {
-        document.getElementById(activeLayer).classList.remove('open');
-        document.getElementById('header-title').innerText = previousTabTitle;
-        document.getElementById('global-back').style.display = 'none';
+        document.getElementById('logDrawer').classList.remove('open');
         document.getElementById('bottomNav').style.transform = 'translateY(0)';
-        activeLayer = null;
+        engineCalculate();
         refreshUI();
     }
 
-    /* LOGGING */
+    /* LOGGING ENGINE */
     function setupInteractions() {
         ['flowSelect', 'painSelect', 'moodSelect', 'digestionSelect'].forEach(id => {
             document.getElementById(id).addEventListener('click', (e) => {
-                if (!e.target.classList.contains('chip')) return;
+                const btn = e.target.closest('.chip');
+                if (!btn) return;
+                haptic(1);
                 const type = id.replace('Select', '');
-                const val = e.target.dataset.val;
+                const val = btn.dataset.val;
                 
                 if (type === 'flow') {
                     selectedData.flow = val;
                     document.querySelectorAll(`#${id} .chip`).forEach(c => c.classList.toggle('active', c.dataset.val === val));
                 } else {
-                    e.target.classList.toggle('active');
+                    btn.classList.toggle('active');
                     const idx = selectedData[type].indexOf(val);
                     if (idx > -1) selectedData[type].splice(idx, 1);
                     else selectedData[type].push(val);
@@ -436,72 +482,143 @@
         const d = document.getElementById('logDate').value;
         if (!d) return;
         appState.logs = appState.logs.filter(l => l.date !== d);
+        
         if (selectedData.flow !== 'None' || selectedData.pain.length || selectedData.mood.length || selectedData.digestion.length) {
             appState.logs.push({ date: d, timestamp: new Date(d).getTime(), ...selectedData });
             appState.logs.sort((a, b) => b.timestamp - a.timestamp);
         }
-        localStorage.setItem('regle_db_v2', JSON.stringify(appState));
+        
+        localStorage.setItem('regle_db_v4', JSON.stringify(appState));
+        showToast('Log Saved');
         closeLayer();
     }
 
-    /* ENGINE & UI RENDER */
+    /* PREDICTIVE ALGORITHM (Analyzes history to find true averages) */
+    function engineCalculate() {
+        const flows = [...appState.logs].filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => a.timestamp - b.timestamp);
+        if (flows.length < 2) return;
+
+        let cycles = [], periods = [];
+        let curStart = flows[0], consec = 1;
+
+        for (let i = 1; i < flows.length; i++) {
+            const diffDays = (flows[i].timestamp - flows[i-1].timestamp) / 86400000;
+            if (diffDays > 3) {
+                periods.push(consec);
+                const cycleLen = (flows[i].timestamp - curStart.timestamp) / 86400000;
+                if (cycleLen > 18 && cycleLen < 45) cycles.push(cycleLen); // Ignore outliers
+                curStart = flows[i];
+                consec = 1;
+            } else {
+                consec++;
+            }
+        }
+        periods.push(consec);
+
+        if (cycles.length > 0) appState.calcCycle = Math.round(cycles.reduce((a,b)=>a+b,0)/cycles.length);
+        if (periods.length > 0) appState.calcPeriod = Math.round(periods.reduce((a,b)=>a+b,0)/periods.length);
+        
+        // Safety bounds
+        if(appState.calcCycle < 21) appState.calcCycle = 28;
+        if(appState.calcPeriod > 10) appState.calcPeriod = 5;
+    }
+
+    /* MASTER UI RENDERER */
     function refreshUI() {
+        document.getElementById('set-her').style.borderColor = appState.role === 'woman' ? 'var(--accent)' : '#333';
+        document.getElementById('set-him').style.borderColor = appState.role === 'partner' ? 'var(--accent)' : '#333';
+
         const flows = appState.logs.filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => b.timestamp - a.timestamp);
+        
         if(flows.length > 0) {
-            const next = new Date(flows[0].date);
-            next.setDate(next.getDate() + appState.cycle);
-            const diff = Math.ceil((next - new Date().setHours(0,0,0,0)) / 86400000);
+            const lastStart = new Date(flows[0].date);
+            const today = new Date(); today.setHours(0,0,0,0);
             
-            document.getElementById('heroDays').innerText = Math.abs(diff);
-            document.getElementById('heroLabel').innerText = diff > 0 ? "Days Till Period" : (diff===0 ? "Due Today" : "Days Late");
+            // Current day of cycle
+            const dayOfCycle = Math.floor((today - lastStart) / 86400000) + 1;
             
-            // Generate Dynamic Body Content based on cycle day
-            const cycleDay = diff > 0 ? (appState.cycle - diff) : 1;
-            renderDynamicPhase(cycleDay);
+            // Next period
+            const next = new Date(lastStart);
+            next.setDate(next.getDate() + appState.calcCycle);
+            const diffTillNext = Math.ceil((next - today) / 86400000);
+
+            // Update Ring UI
+            document.getElementById('heroDays').innerText = dayOfCycle > 0 ? dayOfCycle : 1;
+            document.getElementById('heroLabel').innerText = "Day of Cycle";
+            updateRingSVG(dayOfCycle, appState.calcCycle, appState.calcPeriod);
+            
+            // Render Biological Insights
+            renderDynamicPhase(dayOfCycle > 0 ? dayOfCycle : 1);
         }
 
         renderCalendar();
         
-        // Render Insights
-        const historyHTML = appState.logs.slice(0,5).map(l => {
-            const tags = [...l.pain, ...l.mood].join(', ');
-            return `<div style="padding:10px 0; border-bottom:1px solid #222;">
-                <strong>${l.date.slice(5)}</strong> - <span style="color:var(--accent)">${l.flow}</span><br>
-                <span style="font-size:13px; color:#888;">${tags || 'No symptoms'}</span>
+        // Render Insights Tab
+        const histContainer = document.getElementById('historyList');
+        const sorted = appState.logs.slice(0,10); // Last 10 logs
+        histContainer.innerHTML = sorted.length ? sorted.map(l => {
+            const tags = [...l.pain, ...l.mood, ...l.digestion].join(', ');
+            return `<div style="padding:15px 0; border-bottom:1px solid #222;">
+                <div style="font-weight:600; font-size:16px;">${new Date(l.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})} <span style="color:var(--accent); float:right;">${l.flow !== 'None' ? l.flow : ''}</span></div>
+                <div style="font-size:14px; color:#888; margin-top:4px;">${tags || 'No symptoms'}</div>
             </div>`;
-        }).join('');
-        document.getElementById('historyList').innerHTML = historyHTML || 'No data.';
-        document.getElementById('stat-cycle').innerText = appState.cycle;
-        document.getElementById('stat-period').innerText = appState.period;
+        }).join('') : 'No data.';
+        
+        document.getElementById('stat-cycle').innerText = appState.calcCycle;
+        document.getElementById('stat-period').innerText = appState.calcPeriod;
+    }
+
+    /* SVG RING MATH */
+    function updateRingSVG(currentDay, cycleLen, periodLen) {
+        const C = 2 * Math.PI * 90; // Circumference (r=90) ≈ 565.48
+        
+        // 1. Period Red Zone Arc
+        const periodFraction = periodLen / cycleLen;
+        const periodOffset = C - (periodFraction * C);
+        document.getElementById('svg-period').style.strokeDashoffset = periodOffset;
+
+        // 2. Current Day White Line
+        // Needs to accurately place a short line at the correct percentage around the circle
+        const dayFraction = (currentDay - 1) / cycleLen; 
+        const trackerLength = 15; // length of the white dash
+        
+        // The stroke-dasharray format: [dash_length, gap_length]
+        // We set the gap to the full circumference so it only draws one dash.
+        const tracker = document.getElementById('svg-tracker');
+        tracker.style.strokeDasharray = `${trackerLength} ${C}`;
+        
+        // Offset determines position. It draws backwards, so we do C - distance
+        tracker.style.strokeDashoffset = C - (dayFraction * C);
     }
 
     function renderDynamicPhase(day) {
         let phaseKey = 'luteal';
-        if (day >= 1 && day <= appState.period) phaseKey = 'menstrual';
-        else if (day > appState.period && day <= 13) phaseKey = 'follicular';
+        if (day >= 1 && day <= appState.calcPeriod) phaseKey = 'menstrual';
+        else if (day > appState.calcPeriod && day <= 13) phaseKey = 'follicular';
         else if (day >= 14 && day <= 16) phaseKey = 'ovulation';
 
         const data = phaseDatabase[phaseKey];
         const roleContent = appState.role === 'woman' ? data.her : data.partner;
 
         document.getElementById('dynamic-phase-content').innerHTML = `
-            <div class="card" style="border-left: 4px solid var(--accent);">
-                <h4>${data.name}</h4>
-                <p style="color:var(--subtext); font-size:14px; margin-bottom:15px; font-weight:600;">${data.subtitle}</p>
+            <div class="card" style="border-left: 4px solid var(--accent); padding: 25px;">
+                <h3 style="color:var(--text); margin-bottom:5px;">${data.name}</h3>
+                <p style="color:var(--accent); font-size:13px; font-weight:800; text-transform:uppercase; margin-bottom:20px; letter-spacing:1px;">${data.subtitle}</p>
                 ${roleContent}
             </div>
         `;
     }
 
+    /* CALENDAR RENDERER */
     function changeMonth(delta) { currentCalDate.setMonth(currentCalDate.getMonth() + delta); renderCalendar(); }
 
     function renderCalendar() {
-        const year = currentCalDate.getFullYear();
-        const month = currentCalDate.getMonth();
-        document.getElementById('calMonthYear').innerText = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+        const y = currentCalDate.getFullYear();
+        const m = currentCalDate.getMonth();
+        document.getElementById('calMonthYear').innerText = new Date(y, m).toLocaleString('default', { month: 'long', year: 'numeric' });
         
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const firstDay = new Date(y, m, 1).getDay();
+        const daysInMonth = new Date(y, m + 1, 0).getDate();
         const cal = document.getElementById('calDays');
         cal.innerHTML = ['S','M','T','W','T','F','S'].map(d => `<div class="weekday">${d}</div>`).join('');
         
@@ -509,12 +626,28 @@
         
         const todayStr = new Date().toISOString().split('T')[0];
         
+        // Calculate Predictions
+        let predictedSet = new Set();
+        const flows = appState.logs.filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => b.timestamp - a.timestamp);
+        if(flows.length > 0) {
+            const lastStart = new Date(flows[0].date);
+            for(let i=1; i<=3; i++) {
+                const n = new Date(lastStart); n.setDate(n.getDate() + (appState.calcCycle * i));
+                for(let p=0; p<appState.calcPeriod; p++) {
+                    const pDay = new Date(n); pDay.setDate(pDay.getDate() + p);
+                    predictedSet.add(pDay.toISOString().split('T')[0]);
+                }
+            }
+        }
+
         for (let i = 1; i <= daysInMonth; i++) {
-            const dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
             let cls = 'day current-month';
             if (dStr === todayStr) cls += ' today';
             if (appState.logs.find(l => l.date === dStr && l.flow !== 'None')) cls += ' logged';
-            cal.innerHTML += `<div class="${cls}" onclick="openLayer('logDrawer','Log Data'); document.getElementById('logDate').value='${dStr}'; loadLog('${dStr}');">${i}</div>`;
+            if (predictedSet.has(dStr)) cls += ' predicted';
+            
+            cal.innerHTML += `<div class="${cls}" onclick="haptic(1); openLayer('logDrawer'); document.getElementById('logDate').value='${dStr}'; loadLog('${dStr}');">${i}</div>`;
         }
     }
 </script>
