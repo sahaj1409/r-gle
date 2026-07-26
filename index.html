@@ -7,392 +7,490 @@
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/C_Programming_Language.svg/512px-C_Programming_Language.svg.png">
-<title>Onyx Cycle</title>
+<title>Règle</title>
 <style>
     :root {
         --bg: #000000; 
         --card: #121212; 
+        --card-hover: #1a1a1c;
         --border: #222222;
         --text: #F5F5F7; 
         --subtext: #8E8E93;
-        --accent: #D2042D; /* Premium Cherry Red */
+        --accent: #D2042D; /* Cherry Red */
         --accent-muted: rgba(210, 4, 45, 0.15);
         --accent-glow: rgba(210, 4, 45, 0.3);
         --ovulation: #30D158;
-        --safetv: env(safe-area-inset-top); 
-        --safebv: env(safe-area-inset-bottom);
+        --safetv: env(safe-area-inset-top, 40px); 
+        --safebv: env(safe-area-inset-bottom, 30px);
     }
 
-    /* iOS Performance & Smoothness */
-    * { 
-        box-sizing: border-box; 
-        -webkit-tap-highlight-color: transparent; 
-        touch-action: manipulation; 
-    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; margin: 0; padding: 0; }
     
     body {
-        margin: 0; padding: calc(15px + var(--safetv)) 15px calc(100px + var(--safebv)) 15px;
         background-color: var(--bg); color: var(--text);
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
         font-size: 17px; letter-spacing: -0.4px; 
-        overscroll-behavior-y: none; 
+        overscroll-behavior-y: none; overflow: hidden;
     }
 
-    h1, h2, h3 { font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+    h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.5px; }
     h1 { font-size: 34px; margin-bottom: 5px; }
-    h3 { font-size: 20px; color: var(--text); margin-bottom: 15px; }
+    h2 { font-size: 28px; margin-bottom: 15px; }
+    h3 { font-size: 20px; margin-bottom: 15px; }
+    h4 { font-size: 16px; margin-bottom: 8px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;}
 
-    .header-area { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
-    .subtitle { color: var(--subtext); font-size: 15px; }
+    /* APP LAYOUT */
+    #app-container { height: 100vh; display: flex; flex-direction: column; opacity: 1; transition: opacity 0.4s ease; }
     
-    /* Tactile Micro-animations */
-    .role-badge { 
-        font-size: 12px; background: #2c2c2e; padding: 6px 12px; border-radius: 20px; 
-        color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; 
-        cursor: pointer; transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    .app-header {
+        padding: calc(15px + var(--safetv)) 20px 10px 20px;
+        display: flex; align-items: center; justify-content: space-between;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 100;
     }
-    .role-badge:active { transform: scale(0.92); }
+    .header-title { font-size: 24px; font-weight: 700; }
+    
+    .back-btn {
+        background: none; border: none; color: var(--accent); font-size: 28px;
+        display: none; align-items: center; cursor: pointer; padding: 0 15px 0 0;
+    }
+    .back-btn span { font-size: 17px; font-weight: 600; margin-left: 4px; line-height: 1;}
 
-    .card { background-color: var(--card); border-radius: 20px; padding: 22px; margin-bottom: 20px; border: 1px solid var(--border); }
+    .view-container { flex: 1; overflow-y: auto; padding: 20px 15px calc(100px + var(--safebv)) 15px; display: none; animation: fadeIn 0.3s ease forwards;}
+    .view-container.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    .hero-metric { text-align: center; padding: 30px 15px; border: 1px solid var(--accent-muted); background: linear-gradient(180deg, #160205 0%, #000000 100%);}
-    .hero-days { font-size: 68px; font-weight: 800; color: var(--accent); line-height: 1; margin: 12px 0; text-shadow: 0 4px 20px var(--accent-glow);}
-    .hero-label { color: var(--subtext); text-transform: uppercase; font-size: 12px; letter-spacing: 1px; font-weight: 600;}
+    /* CARDS & UI */
+    .card { background-color: var(--card); border-radius: 24px; padding: 22px; margin-bottom: 20px; border: 1px solid var(--border); }
+    .hero-card { text-align: center; padding: 35px 20px; background: linear-gradient(180deg, #160205 0%, #000000 100%); border-color: var(--accent-muted); }
+    .hero-days { font-size: 76px; font-weight: 800; color: var(--accent); line-height: 1; margin: 10px 0; text-shadow: 0 4px 30px var(--accent-glow); letter-spacing: -2px;}
+    .hero-label { color: var(--subtext); text-transform: uppercase; font-size: 13px; letter-spacing: 1.5px; font-weight: 700;}
 
-    .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .stat-card { padding: 18px; text-align: center; }
-    .stat-val { font-size: 28px; font-weight: 700; color: var(--text); }
-    .stat-label { font-size: 13px; color: var(--subtext); margin-top: 4px; }
+    .btn { background: #242426; border: 1px solid #333; color: var(--text); padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; text-align: center; transition: all 0.2s;}
+    .btn:active { transform: scale(0.96); }
+    .btn-main { background: var(--accent); color: white; border: none; font-size: 18px; font-weight: 700; box-shadow: 0 4px 20px var(--accent-glow); margin-top: 10px;}
+    .btn-main:active { transform: scale(0.95); background: #b00325;}
 
-    /* Partner Guide Card */
-    .partner-guide { border-left: 4px solid var(--accent); background: linear-gradient(135deg, var(--accent-muted) 0%, #121212 100%); display: none;}
-    .guide-section { margin-bottom: 15px; }
-    .guide-title { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 700; margin-bottom: 6px; }
-    .guide-text { font-size: 15px; color: #E5E5EA; line-height: 1.4; }
+    input[type="date"], input[type="number"] { width: 100%; padding: 18px; background: #1a1a1c; border: 1px solid var(--border); border-radius: 16px; color: var(--text); font-size: 18px; font-weight: 500; margin-bottom: 15px; -webkit-appearance: none; font-family: inherit;}
 
-    /* Calendar */
-    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 5px; }
+    /* BOTTOM NAV */
+    .bottom-nav {
+        position: fixed; bottom: 0; left: 0; width: 100%;
+        background-color: rgba(10, 10, 10, 0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        padding: 15px 10px calc(15px + var(--safebv)) 10px;
+        border-top: 1px solid rgba(255,255,255,0.05); z-index: 100;
+        display: flex; justify-content: space-around; transition: transform 0.4s ease;
+    }
+    .nav-item { background: none; border: none; color: var(--subtext); font-size: 11px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 25%;}
+    .nav-item.active { color: var(--accent); }
+    .nav-icon { font-size: 24px; }
+
+    /* EXPANDABLE SECTIONS (The "Tons of info" styling) */
+    details { background: #1a1a1c; border-radius: 16px; margin-bottom: 10px; overflow: hidden; border: 1px solid #333;}
+    summary { padding: 18px; font-weight: 600; font-size: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; color: var(--text);}
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: '+'; color: var(--accent); font-size: 24px; font-weight: 300; line-height: 0; transition: transform 0.2s;}
+    details[open] summary::after { transform: rotate(45deg); }
+    details[open] summary { border-bottom: 1px solid #333; background: #222;}
+    .details-content { padding: 18px; font-size: 15px; color: #ccc; line-height: 1.5; background: #151515;}
+    .details-content ul { padding-left: 20px; margin-top: 10px; }
+    .details-content li { margin-bottom: 8px; }
+
+    /* DRAWERS & LOGGING */
+    .drawer {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: var(--bg); z-index: 200;
+        transform: translateX(100%); transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+        display: flex; flex-direction: column;
+    }
+    .drawer.open { transform: translateX(0); }
+    
+    .log-category { font-size: 13px; color: var(--accent); text-transform: uppercase; font-weight: 700; letter-spacing: 1px; margin: 25px 20px 10px 20px; }
+    .scroll-row { display: flex; overflow-x: auto; gap: 10px; padding: 0 20px 10px 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;}
+    .scroll-row::-webkit-scrollbar { display: none; }
+    .chip { flex: 0 0 auto; background: #1a1a1c; border: 1px solid #333; padding: 12px 20px; border-radius: 20px; font-size: 15px; font-weight: 500; color: var(--text); transition: 0.2s; scroll-snap-align: start;}
+    .chip.active { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow);}
+
+    /* CALENDAR (Compact for space) */
+    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .cal-nav { background: none; border: none; color: var(--accent); font-size: 20px;}
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
-    .weekday { color: var(--subtext); font-size: 13px; font-weight: 600; padding-bottom: 10px; }
-    .day { height: 45px; display: flex; align-items: center; justify-content: center; font-size: 16px; position: relative; border-radius: 12px; color: #555; font-weight: 500;}
+    .weekday { color: var(--subtext); font-size: 13px; font-weight: 600; padding-bottom: 5px; }
+    .day { height: 40px; display: flex; align-items: center; justify-content: center; font-size: 16px; border-radius: 12px; color: #444; font-weight: 500; position: relative;}
     .day.current-month { color: var(--text); }
-    .day.today { background-color: #333; color: var(--text); font-weight: 700;}
-    .day.logged { background-color: var(--accent-muted); color: var(--accent); font-weight: 700; border: 1px solid var(--accent-glow);}
-    .day.predicted { position: relative; }
-    .day.predicted::after { content: ''; position: absolute; bottom: 6px; width: 5px; height: 5px; background-color: var(--accent); border-radius: 50%; opacity: 0.6; }
-    .day.ovulation { color: var(--ovulation); font-weight: 700; }
-    .day.ovulation::after { content: ''; position: absolute; bottom: 6px; width: 5px; height: 5px; background-color: var(--ovulation); border-radius: 50%; }
-
-    /* Input Drawer (Smooth Spring Animation) */
-    #logDrawer {
-        position: fixed; bottom: 0; left: 0; width: 100%; 
-        background-color: #151515; border-top-left-radius: 24px; border-top-right-radius: 24px;
-        padding: 25px 20px calc(25px + var(--safebv)) 20px;
-        transform: translateY(100%); 
-        transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1); /* Apple-style Spring */
-        z-index: 1000; border-top: 1px solid var(--border); 
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
-        will-change: transform; 
-    }
-    #logDrawer.open { transform: translateY(0); }
-    #drawerOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; z-index: 999; opacity: 0; transition: opacity 0.3s ease; backdrop-filter: blur(3px);}
-    #drawerOverlay.open { display: block; opacity: 1; }
-
-    .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .close-drawer { background: #2c2c2e; border: none; color: var(--text); font-size: 14px; font-weight: 600; padding: 8px 16px; border-radius: 16px; cursor: pointer; transition: transform 0.2s;}
-    .close-drawer:active { transform: scale(0.92); }
-
-    .log-section { margin-bottom: 24px; }
-    .log-label { font-size: 14px; color: var(--subtext); margin-bottom: 10px; display: block; font-weight: 500;}
-    .select-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; }
-    
-    /* Tactile Buttons */
-    .select-btn { 
-        background-color: #242426; border: 1px solid #333; color: var(--text); 
-        padding: 14px; border-radius: 14px; text-align: center; font-size: 14px; 
-        cursor: pointer; font-weight: 500;
-        transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.2s, border-color 0.2s; 
-    }
-    .select-btn:active { transform: scale(0.92); background-color: #333; }
-    .select-btn.active { background-color: var(--accent); border-color: var(--accent); color: white; font-weight: 700; transform: scale(1.02); box-shadow: 0 4px 15px var(--accent-glow);}
-
-    input[type="date"] { width: 100%; padding: 16px; background: #242426; border: 1px solid #333; border-radius: 14px; color: var(--text); font-size: 17px; margin-bottom: 20px; -webkit-appearance: none; font-weight: 500;}
-
-    /* Modals & Glass Bottom Bar */
-    #onboardingModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); z-index: 2000; display: none; flex-direction: column; justify-content: center; padding: 30px; text-align: center; }
-    .onboard-btn { background: #1c1c1e; border: 1px solid var(--border); color: var(--text); padding: 22px; border-radius: 20px; font-size: 18px; font-weight: 700; margin-bottom: 15px; cursor: pointer; text-align: left; transition: transform 0.2s; }
-    .onboard-btn:active { transform: scale(0.96); }
-    .onboard-btn span { display: block; font-size: 14px; color: var(--subtext); font-weight: 400; margin-top: 6px; line-height: 1.4;}
-    
-    .bottom-bar { 
-        position: fixed; bottom: 0; left: 0; width: 100%; 
-        background-color: rgba(10, 10, 10, 0.85); 
-        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); 
-        padding: 15px calc(20px + var(--safebv)) calc(15px + var(--safebv)) 20px; 
-        border-top: 1px solid rgba(255,255,255,0.05); 
-        z-index: 900; display: flex; justify-content: center; gap: 12px; 
-    }
-    
-    .btn-main { 
-        background-color: var(--accent); color: white; border: none; width: 100%; max-width: 320px; 
-        padding: 18px; border-radius: 16px; font-size: 17px; font-weight: 700; 
-        box-shadow: 0 6px 20px var(--accent-glow);
-        transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s;
-    }
-    .btn-main:active { transform: scale(0.95); box-shadow: 0 2px 10px var(--accent-glow); }
-    
-    .btn-secondary-action { background: #242426; border: none; color: var(--text); padding: 0 18px; border-radius: 16px; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.2s;}
-    .btn-secondary-action:active { transform: scale(0.92); }
-    
-    .cal-nav { background: none; border: none; color: var(--accent); font-size: 22px; padding: 10px 20px; transition: transform 0.2s;}
-    .cal-nav:active { transform: scale(0.8); }
-    
-    .data-links { text-align: center; margin-top: 35px; font-size: 13px;}
-    .data-links button { background: none; border: none; color: var(--subtext); padding: 10px 15px; font-size: 14px; font-weight: 500; cursor: pointer;}
-    .data-links button:active { color: var(--text); }
+    .day.today { background-color: #2c2c2e; font-weight: 800;}
+    .day.logged { background-color: var(--accent-muted); color: var(--accent); font-weight: 800; border: 1px solid var(--accent-glow);}
+    .day.predicted::after { content: ''; position: absolute; bottom: 4px; width: 4px; height: 4px; background-color: var(--accent); border-radius: 50%; opacity: 0.5; }
 </style>
 </head>
 <body>
 
-<div id="onboardingModal">
-    <div>
-        <h1 style="font-size: 38px;">Onyx</h1>
-        <p class="subtitle" style="margin-bottom: 40px;">Select your experience.</p>
-        <div class="onboard-btn" onclick="setRole('woman')">
-            👩 Tracking my cycle
-            <span>Full logging, predictions, and personal analytics.</span>
+<!-- ONBOARDING (Simplified for this file, assumes you set it up previously, defaults to prompt) -->
+<div id="onboarding" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:5000; padding:40px 20px; display:none;">
+    <h2>Setup Règle</h2>
+    <label class="hero-label">Your Role</label>
+    <div style="display:flex; gap:10px; margin-top:10px; margin-bottom: 20px;">
+        <button class="btn" id="ob-her" onclick="obRole='woman'; this.style.borderColor='var(--accent)'">Her (Personal)</button>
+        <button class="btn" id="ob-him" onclick="obRole='partner'; this.style.borderColor='var(--accent)'">Partner</button>
+    </div>
+    <label class="hero-label">Last Period Start Date</label>
+    <input type="date" id="ob-date" style="margin-top:10px; margin-bottom: 30px;">
+    <button class="btn-main" onclick="finishOb()">Launch Règle</button>
+</div>
+
+<!-- MAIN APP -->
+<div id="app-container">
+    <div class="app-header">
+        <button class="back-btn" id="global-back" onclick="closeLayer()">← <span>Back</span></button>
+        <div class="header-title" id="header-title">Today</div>
+        <div style="width: 40px;"></div>
+    </div>
+
+    <!-- TAB 1: TODAY / DEEP DIVE -->
+    <div class="view-container active" id="tab-today">
+        <div class="card hero-card">
+            <div class="hero-label" id="heroLabel">Next Period</div>
+            <div class="hero-days" id="heroDays">--</div>
+            <div class="hero-label" style="color: var(--text); font-weight: 500;" id="heroDate">Awaiting Data</div>
         </div>
-        <div class="onboard-btn" onclick="setRole('partner')">
-            🤝 Tracking partner's cycle
-            <span>Deep hormonal breakdowns and care guides.</span>
-        </div>
-    </div>
-</div>
 
-<div class="header-area">
-    <div>
-        <h1>Onyx Cycle</h1>
-        <p class="subtitle">Private & Offline</p>
-    </div>
-    <div class="role-badge" id="roleBadgeDisplay" onclick="resetOnboarding()">Mode: --</div>
-</div>
+        <button class="btn-main" style="width: 100%; margin-bottom: 25px; border-radius: 20px; padding: 22px;" onclick="openLayer('logDrawer', 'Daily Log')">
+            Log Today's Data
+        </button>
 
-<div class="card hero-metric">
-    <div class="hero-label" id="heroLabel">Next Period</div>
-    <div class="hero-days" id="heroDays">--</div>
-    <div class="subtitle" id="heroDate">Log data to predict</div>
-</div>
+        <!-- DYNAMIC CONTENT INJECTED HERE BASED ON ROLE & PHASE -->
+        <div id="dynamic-phase-content"></div>
+    </div>
 
-<div class="card partner-guide" id="partnerGuideCard">
-    <h3 style="color: var(--accent); margin-bottom: 14px;">Partner Care Guide</h3>
-    <div class="guide-section">
-        <div class="guide-title">Current Phase</div>
-        <div class="guide-text" id="guidePhase">Awaiting data...</div>
-    </div>
-    <div class="guide-section" style="margin-top: 16px;">
-        <div class="guide-title">Her State</div>
-        <div class="guide-text" id="guideState">Awaiting data...</div>
-    </div>
-    <div class="guide-section" style="margin-top: 16px;">
-        <div class="guide-title">How to Support Her</div>
-        <div class="guide-text" id="guideAction">Awaiting data...</div>
-    </div>
-</div>
-
-<div class="analysis-grid">
-    <div class="card stat-card">
-        <div class="stat-val" id="avgCycle">--</div>
-        <div class="stat-label">Avg Cycle</div>
-    </div>
-    <div class="card stat-card">
-        <div class="stat-val" id="avgPeriod">--</div>
-        <div class="stat-label">Avg Period</div>
-    </div>
-</div>
-
-<div class="card">
-    <div class="cal-header">
-        <button class="cal-nav" onclick="changeMonth(-1)">❮</button>
-        <h2 id="calMonthYear">Month Year</h2>
-        <button class="cal-nav" onclick="changeMonth(1)">❯</button>
-    </div>
-    <div class="cal-grid" id="weekdayHeader"></div>
-    <div class="cal-grid" id="calDays"></div>
-</div>
-
-<div class="data-links">
-    <button onclick="exportData()">Backup</button> • <button onclick="importData()">Restore</button>
-</div>
-
-<div class="bottom-bar">
-    <button class="btn-main" onclick="openDrawer()">Log Today's Flow</button>
-    <button class="btn-secondary-action" onclick="resetOnboarding()">⚙️</button>
-</div>
-
-<!-- INPUT DRAWER -->
-<div id="drawerOverlay" onclick="closeDrawer()"></div>
-<div id="logDrawer">
-    <div class="drawer-header">
-        <h3 style="margin:0;">Log Details</h3>
-        <button class="close-drawer" onclick="closeDrawer()">Done</button>
-    </div>
-    <input type="date" id="logDate">
-    <div class="log-section">
-        <span class="log-label">Flow Intensity</span>
-        <div class="select-group" id="flowSelect">
-            <button class="select-btn" data-val="Light">Light</button>
-            <button class="select-btn" data-val="Medium">Medium</button>
-            <button class="select-btn" data-val="Heavy">Heavy</button>
-            <button class="select-btn" data-val="Spotting">Spotting</button>
-            <button class="select-btn" data-val="None">None</button>
+    <!-- TAB 2: CALENDAR -->
+    <div class="view-container" id="tab-calendar">
+        <div class="card">
+            <div class="cal-header">
+                <button class="cal-nav" onclick="changeMonth(-1)">❮</button>
+                <h2 id="calMonthYear" style="margin:0; font-size: 20px;">Month</h2>
+                <button class="cal-nav" onclick="changeMonth(1)">❯</button>
+            </div>
+            <div class="cal-grid" id="weekdayHeader"></div>
+            <div class="cal-grid" id="calDays"></div>
         </div>
     </div>
-    <div class="log-section">
-        <span class="log-label">Pain & Discomfort</span>
-        <div class="select-group" id="painSelect">
-            <button class="select-btn" data-val="Cramps">Cramps</button>
-            <button class="select-btn" data-val="Headache">Headache</button>
-            <button class="select-btn" data-val="Backache">Backache</button>
+
+    <!-- TAB 3: INSIGHTS -->
+    <div class="view-container" id="tab-analysis">
+        <h2 style="margin-bottom: 20px;">Cycle Insights</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+            <div class="card" style="text-align: center; padding: 15px;">
+                <div style="font-size: 28px; font-weight: 800; margin-bottom: 5px;" id="stat-cycle">--</div>
+                <div class="hero-label">Avg Cycle</div>
+            </div>
+            <div class="card" style="text-align: center; padding: 15px;">
+                <div style="font-size: 28px; font-weight: 800; margin-bottom: 5px;" id="stat-period">--</div>
+                <div class="hero-label">Avg Period</div>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Recent Logs</h3>
+            <div id="historyList" style="font-size: 14px; color: var(--subtext);">No data yet.</div>
         </div>
     </div>
-    <div class="log-section">
-        <span class="log-label">Mood</span>
-        <div class="select-group" id="moodSelect">
-            <button class="select-btn" data-val="Happy">Happy</button>
-            <button class="select-btn" data-val="Sensitive">Sensitive</button>
-            <button class="select-btn" data-val="Irritable">Irritable</button>
-            <button class="select-btn" data-val="Anxious">Anxious</button>
+
+    <!-- TAB 4: SETTINGS -->
+    <div class="view-container" id="tab-settings">
+        <h2>Settings</h2>
+        <div class="card">
+            <h3>Switch Mode</h3>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" onclick="switchRole('woman')">Personal</button>
+                <button class="btn" onclick="switchRole('partner')">Partner</button>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Data</h3>
+            <button class="btn" style="margin-bottom: 10px;" onclick="wipeData()">Erase All Data</button>
+        </div>
+    </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" onclick="switchTab('tab-today', 'Today', this)"><span class="nav-icon">⦿</span> Today</button>
+    <button class="nav-item" onclick="switchTab('tab-calendar', 'Calendar', this)"><span class="nav-icon">📅</span> Calendar</button>
+    <button class="nav-item" onclick="switchTab('tab-analysis', 'Insights', this)"><span class="nav-icon">📊</span> Insights</button>
+    <button class="nav-item" onclick="switchTab('tab-settings', 'Settings', this)"><span class="nav-icon">⚙️</span> Settings</button>
+</nav>
+
+<!-- EXTENDED LOGGING DRAWER -->
+<div class="drawer" id="logDrawer">
+    <div style="flex: 1; overflow-y: auto; padding-bottom: calc(100px + var(--safebv)); padding-top: calc(15px + var(--safetv));">
+        
+        <div style="padding: 0 20px;"><input type="date" id="logDate"></div>
+
+        <div class="log-category">Bleeding / Flow</div>
+        <div class="scroll-row" id="flowSelect">
+            <div class="chip" data-val="None">None</div>
+            <div class="chip" data-val="Spotting">Spotting</div>
+            <div class="chip" data-val="Light">Light</div>
+            <div class="chip" data-val="Medium">Medium</div>
+            <div class="chip" data-val="Heavy">Heavy</div>
+        </div>
+
+        <div class="log-category">Physical Symptoms</div>
+        <div class="scroll-row multi" id="painSelect">
+            <div class="chip" data-val="Cramps">Cramps</div>
+            <div class="chip" data-val="Tender Breasts">Tender Breasts</div>
+            <div class="chip" data-val="Headache">Headache</div>
+            <div class="chip" data-val="Bloating">Bloating</div>
+            <div class="chip" data-val="Fatigue">Fatigue</div>
+            <div class="chip" data-val="Acne">Acne</div>
+        </div>
+
+        <div class="log-category">Mind & Mood</div>
+        <div class="scroll-row multi" id="moodSelect">
+            <div class="chip" data-val="Calm">Calm</div>
+            <div class="chip" data-val="Happy">Happy</div>
+            <div class="chip" data-val="Irritable">Irritable</div>
+            <div class="chip" data-val="Sad">Sad</div>
+            <div class="chip" data-val="Anxious">Anxious</div>
+            <div class="chip" data-val="Brain Fog">Brain Fog</div>
+        </div>
+
+        <div class="log-category">Digestion & Cravings</div>
+        <div class="scroll-row multi" id="digestionSelect">
+            <div class="chip" data-val="Sweet Cravings">Sweet Cravings</div>
+            <div class="chip" data-val="Salty Cravings">Salty Cravings</div>
+            <div class="chip" data-val="Nausea">Nausea</div>
+            <div class="chip" data-val="Gassy">Gassy</div>
+        </div>
+        
+        <div style="padding: 20px;">
+            <button class="btn-main" style="width: 100%; border-radius: 20px; padding: 20px;" onclick="saveLog()">Save Daily Log</button>
         </div>
     </div>
 </div>
 
 <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
-      });
-    }
+    /* MASSIVE BIOLOGICAL & ACTION DATA REPOSITORY */
+    const phaseDatabase = {
+        menstrual: {
+            name: "Menstrual Phase",
+            subtitle: "Days 1-5 • The Winter Phase",
+            her: `
+                <details open><summary>Hormonal State</summary><div class="details-content">Estrogen and progesterone plunge to their lowest levels. This drop triggers the shedding of the uterine lining. You might feel a significant drop in physical and mental energy. Focus on rest.</div></details>
+                <details><summary>Nutrition & Cravings</summary><div class="details-content">Iron levels are dropping. <ul><li>Eat: Iron-rich foods (spinach, red meat, lentils).</li><li>Eat: Vitamin C (citrus, bell peppers) to help absorb iron.</li><li>Avoid: Extremely salty foods to reduce bloating, and heavy caffeine which can worsen cramps.</li></ul></div></details>
+                <details><summary>Movement & Exercise</summary><div class="details-content">Your body is working hard natively. Do not push for PRs at the gym. Stick to light stretching, restorative yoga, or short, gentle walks. Sleep is your best workout right now.</div></details>
+                <details><summary>Self-Care Focus</summary><div class="details-content">Keep your lower abdomen warm with a heating pad to relax uterine muscles. Allow yourself to be antisocial without guilt. Journaling or reading is highly recommended.</div></details>
+            `,
+            partner: `
+                <details open><summary>Her Biological Reality</summary><div class="details-content">Her body is literally shedding tissue. Hormones are at rock bottom, meaning she is naturally fatigued, physically sore (cramps, backache), and may have less emotional bandwidth.</div></details>
+                <details><summary>Actionable Support Plan</summary><div class="details-content">Step up physically. <ul><li>Cook meals without asking "what do you want?".</li><li>Take over household chores (dishes, trash).</li><li>Keep the house quiet and low-stress.</li></ul></div></details>
+                <details><summary>Emotional Playbook</summary><div class="details-content">Do not take a lack of enthusiasm personally. If she's quiet or irritable, it's physiological, not a reflection of your relationship. Validate her discomfort.</div></details>
+                <details><summary>Quick Care Gestures</summary><div class="details-content"><ul><li>Bring her a hot water bottle / heating pad without being asked.</li><li>Make her a warm, decaf tea (peppermint or ginger).</li><li>Offer a gentle lower back massage.</li></ul></div></details>
+            `
+        },
+        follicular: {
+            name: "Follicular Phase",
+            subtitle: "Days 6-13 • The Spring Phase",
+            her: `
+                <details open><summary>Hormonal State</summary><div class="details-content">Estrogen is rising steadily, and testosterone starts a slow climb. This is your body preparing an egg. You will notice a sharp return of energy, brain clarity, and optimism.</div></details>
+                <details><summary>Nutrition & Cravings</summary><div class="details-content">Your metabolism naturally slows slightly here, but energy is high. <ul><li>Eat: Fresh, light foods, salads, fermented foods (kimchi, kombucha) to support gut health as estrogen rises.</li><li>Focus on lean proteins to sustain your new energy.</li></ul></div></details>
+                <details><summary>Movement & Exercise</summary><div class="details-content">Time to push it. Your pain tolerance is higher and stamina is peaking. Great time for HIIT, heavy weight lifting, running, and trying new, intense workout classes.</div></details>
+                <details><summary>Productivity Focus</summary><div class="details-content">Your brain is primed for learning and socializing. Schedule important meetings, start new complex projects, and socialize heavily. You are at your most charismatic.</div></details>
+            `,
+            partner: `
+                <details open><summary>Her Biological Reality</summary><div class="details-content">Rising estrogen means she is likely feeling energized, confident, and highly social. The brain fog is gone. She is physically and mentally hitting her stride for the month.</div></details>
+                <details><summary>Actionable Support Plan</summary><div class="details-content">Keep up with her energy! <ul><li>This is the perfect week to plan active dates (hiking, concerts).</li><li>Brainstorm ideas or tackle complex life admin together.</li></ul></div></details>
+                <details><summary>Emotional Playbook</summary><div class="details-content">Engage with her ideas. She will likely be more talkative and visionary right now. Be an active listener and match her enthusiastic energy.</div></details>
+            `
+        },
+        ovulation: {
+            name: "Ovulation Phase",
+            subtitle: "Days 14-16 • The Summer Phase",
+            her: `
+                <details open><summary>Hormonal State</summary><div class="details-content">Estrogen and testosterone hit their absolute peak before dropping sharply. An egg is released. You likely feel extremely confident, attractive, and have a peaked libido.</div></details>
+                <details><summary>Movement & Exercise</summary><div class="details-content">You have maximum strength right now, but ligaments can be slightly looser due to estrogen. Lift heavy, do high-energy cardio, but ensure your form is perfect to avoid injury.</div></details>
+                <details><summary>Social & Mindset</summary><div class="details-content">Your verbal fluency is at its peak. This is the time to negotiate a raise, have difficult but necessary conversations, or go to big social events. You are glowing.</div></details>
+            `,
+            partner: `
+                <details open><summary>Her Biological Reality</summary><div class="details-content">Peak hormones. She is biologically wired right now to be social, confident, and her libido is likely at its highest point in the cycle.</div></details>
+                <details><summary>Actionable Support Plan</summary><div class="details-content"><ul><li>Take her out. She likely wants to be seen and be social.</li><li>Initiate intimacy (if applicable to your relationship), as she is most biologically receptive now.</li></ul></div></details>
+                <details><summary>Quick Care Gestures</summary><div class="details-content">Compliment her. Notice her energy and tell her she looks great. Celebrate her wins this week.</div></details>
+            `
+        },
+        luteal: {
+            name: "Luteal Phase",
+            subtitle: "Days 17-28 • The Autumn Phase",
+            her: `
+                <details open><summary>Hormonal State</summary><div class="details-content">Progesterone becomes the dominant hormone, slowing things down. Midway through, if no pregnancy occurs, all hormones crash. This causes PMS symptoms: bloating, mood swings, and fatigue.</div></details>
+                <details><summary>Nutrition & Cravings</summary><div class="details-content">Your metabolism speeds up (burning ~100-300 extra calories), hence the cravings! <ul><li>Eat: Complex carbs (sweet potatoes, oats) to stabilize blood sugar and serotonin.</li><li>Eat: Magnesium-rich foods (dark chocolate) to fight cramps.</li></ul></div></details>
+                <details><summary>Movement & Exercise</summary><div class="details-content">Scale it back. As the phase progresses, switch from heavy lifting to pilates, strength maintenance, and long walks. Your core body temp is higher, so you will sweat faster.</div></details>
+                <details><summary>Self-Care Focus</summary><div class="details-content">Nesting instinct kicks in. Focus on wrapping up projects rather than starting new ones. Protect your peace, draw boundaries, and prioritize early bedtimes.</div></details>
+            `,
+            partner: `
+                <details open><summary>Her Biological Reality</summary><div class="details-content">Progesterone is making her sleepy and potentially anxious. As hormones crash later in this phase (PMS), she may experience bloating, tender breasts, and high emotional sensitivity.</div></details>
+                <details><summary>Actionable Support Plan</summary><div class="details-content">Tread lightly and be helpful. <ul><li>Do not start unnecessary arguments.</li><li>Let her rest. If she wants to cancel social plans to stay in, support that decision immediately.</li></ul></div></details>
+                <details><summary>Emotional Playbook</summary><div class="details-content">Patience is mandatory. She might feel overwhelmed easily. If she gets upset over something small, recognize it is the hormone drop magnifying her feelings. Validate, don't try to "fix" it with logic.</div></details>
+                <details><summary>Quick Care Gestures</summary><div class="details-content"><ul><li>Buy her favorite comfort snacks/chocolate without asking.</li><li>Suggest ordering takeout so she doesn't have to cook.</li><li>Offer to run her errands.</li></ul></div></details>
+            `
+        }
+    };
 
-    const DB_NAME = 'onyx_cycle_v5';
-    const ROLE_NAME = 'onyx_role';
-    let logs = JSON.parse(localStorage.getItem(DB_NAME) || '[]');
-    let currentRole = localStorage.getItem(ROLE_NAME);
+    /* STATE & CORE */
+    let appState = { role: 'woman', cycle: 28, period: 5, logs: [] };
     let currentCalDate = new Date();
-    let selectedSymptoms = { flow: 'None', pain: [], mood: [] };
+    let activeLayer = null; 
+    let previousTabTitle = "Today";
+    let selectedData = { flow: 'None', pain: [], mood: [], digestion: [] };
+    let obRole = 'woman';
 
     document.addEventListener('DOMContentLoaded', () => {
-        checkOnboarding();
-        setupWeekdayHeader();
-        initializeSelectButtons();
+        const stored = localStorage.getItem('regle_db_v2');
+        if (stored) { appState = JSON.parse(stored); } 
+        else { document.getElementById('onboarding').style.display = 'block'; }
+        
+        setupInteractions();
         refreshUI();
+        document.getElementById('logDate').max = new Date().toISOString().split('T')[0];
     });
 
-    function checkOnboarding() {
-        if (!currentRole) document.getElementById('onboardingModal').style.display = 'flex';
-        else applyRoleTheme();
-    }
-
-    function setRole(role) {
-        localStorage.setItem(ROLE_NAME, role);
-        currentRole = role;
-        document.getElementById('onboardingModal').style.display = 'none';
-        applyRoleTheme();
+    function finishOb() {
+        appState.role = obRole;
+        const d = document.getElementById('ob-date').value;
+        if(d) appState.logs.push({date: d, timestamp: new Date(d).getTime(), flow: 'Medium', pain:[], mood:[], digestion:[]});
+        localStorage.setItem('regle_db_v2', JSON.stringify(appState));
+        document.getElementById('onboarding').style.display = 'none';
         refreshUI();
     }
 
-    function resetOnboarding() {
-        localStorage.removeItem(ROLE_NAME);
-        currentRole = null;
-        document.getElementById('onboardingModal').style.display = 'flex';
+    function switchRole(role) { appState.role = role; refreshUI(); }
+    function wipeData() { if(confirm("Erase everything?")) { localStorage.clear(); location.reload(); } }
+
+    /* NAVIGATION */
+    function switchTab(tabId, title, btnElement) {
+        if(activeLayer) closeLayer();
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+        document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        document.getElementById('header-title').innerText = title;
+        previousTabTitle = title;
+        refreshUI();
     }
 
-    function applyRoleTheme() {
-        const badge = document.getElementById('roleBadgeDisplay');
-        const partnerCard = document.getElementById('partnerGuideCard');
-        
-        if (currentRole === 'partner') {
-            badge.innerText = "Partner Care";
-            partnerCard.style.display = 'block';
-        } else {
-            badge.innerText = "Personal";
-            partnerCard.style.display = 'none';
-        }
-    }
-
-    function refreshUI() {
-        localStorage.setItem(DB_NAME, JSON.stringify(logs));
-        renderCalendar();
-        runAnalysis();
-    }
-
-    function openDrawer() {
-        document.getElementById('logDate').valueAsDate = new Date();
-        resetSymptoms();
+    function openLayer(layerId, title) {
+        activeLayer = layerId;
         const todayStr = new Date().toISOString().split('T')[0];
-        const existingLog = logs.find(l => l.date === todayStr);
-        if(existingLog) {
-            updateSelectGroupUI('flowSelect', existingLog.flow);
-            selectedSymptoms.flow = existingLog.flow;
-        } else {
-            updateSelectGroupUI('flowSelect', 'Medium');
-            selectedSymptoms.flow = 'Medium';
+        document.getElementById('logDate').value = todayStr;
+        loadLog(todayStr);
+        document.getElementById('logDate').onchange = (e) => loadLog(e.target.value);
+
+        document.getElementById(layerId).classList.add('open');
+        document.getElementById('header-title').innerText = title;
+        document.getElementById('global-back').style.display = 'flex';
+        document.getElementById('bottomNav').style.transform = 'translateY(150%)';
+    }
+
+    function closeLayer() {
+        document.getElementById(activeLayer).classList.remove('open');
+        document.getElementById('header-title').innerText = previousTabTitle;
+        document.getElementById('global-back').style.display = 'none';
+        document.getElementById('bottomNav').style.transform = 'translateY(0)';
+        activeLayer = null;
+        refreshUI();
+    }
+
+    /* LOGGING */
+    function setupInteractions() {
+        ['flowSelect', 'painSelect', 'moodSelect', 'digestionSelect'].forEach(id => {
+            document.getElementById(id).addEventListener('click', (e) => {
+                if (!e.target.classList.contains('chip')) return;
+                const type = id.replace('Select', '');
+                const val = e.target.dataset.val;
+                
+                if (type === 'flow') {
+                    selectedData.flow = val;
+                    document.querySelectorAll(`#${id} .chip`).forEach(c => c.classList.toggle('active', c.dataset.val === val));
+                } else {
+                    e.target.classList.toggle('active');
+                    const idx = selectedData[type].indexOf(val);
+                    if (idx > -1) selectedData[type].splice(idx, 1);
+                    else selectedData[type].push(val);
+                }
+            });
+        });
+    }
+
+    function loadLog(dateStr) {
+        selectedData = { flow: 'None', pain: [], mood: [], digestion: [] };
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        const existing = appState.logs.find(l => l.date === dateStr);
+        if (existing) {
+            selectedData = { flow: existing.flow, pain: [...existing.pain], mood: [...existing.mood], digestion: [...(existing.digestion||[])] };
+            document.querySelector(`#flowSelect .chip[data-val="${existing.flow}"]`)?.classList.add('active');
+            existing.pain.forEach(p => document.querySelector(`#painSelect .chip[data-val="${p}"]`)?.classList.add('active'));
+            existing.mood.forEach(m => document.querySelector(`#moodSelect .chip[data-val="${m}"]`)?.classList.add('active'));
+            if(existing.digestion) existing.digestion.forEach(d => document.querySelector(`#digestionSelect .chip[data-val="${d}"]`)?.classList.add('active'));
         }
-        document.getElementById('logDrawer').classList.add('open');
-        document.getElementById('drawerOverlay').classList.add('open');
-    }
-
-    function closeDrawer() {
-        saveLog();
-        document.getElementById('logDrawer').classList.remove('open');
-        document.getElementById('drawerOverlay').classList.remove('open');
-    }
-
-    function resetSymptoms() {
-        selectedSymptoms = { flow: 'None', pain: [], mood: [] };
-        document.querySelectorAll('.select-btn').forEach(b => b.classList.remove('active'));
-    }
-
-    function initializeSelectButtons() {
-        document.getElementById('flowSelect').addEventListener('click', (e) => {
-            if (!e.target.classList.contains('select-btn')) return;
-            selectedSymptoms.flow = e.target.dataset.val;
-            updateSelectGroupUI('flowSelect', selectedSymptoms.flow);
-        });
-        document.getElementById('painSelect').addEventListener('click', (e) => handleMultiSelect(e, 'pain'));
-        document.getElementById('moodSelect').addEventListener('click', (e) => handleMultiSelect(e, 'mood'));
-    }
-
-    function handleMultiSelect(e, type) {
-        if (!e.target.classList.contains('select-btn')) return;
-        const val = e.target.dataset.val;
-        e.target.classList.toggle('active');
-        const index = selectedSymptoms[type].indexOf(val);
-        if (index > -1) selectedSymptoms[type].splice(index, 1);
-        else selectedSymptoms[type].push(val);
-    }
-
-    function updateSelectGroupUI(groupId, activeVal) {
-        document.getElementById(groupId).querySelectorAll('.select-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.val === activeVal);
-        });
     }
 
     function saveLog() {
-        const dateStr = document.getElementById('logDate').value;
-        if (!dateStr || selectedSymptoms.flow === 'None') {
-            if(dateStr) { logs = logs.filter(l => l.date !== dateStr); refreshUI(); }
-            return;
+        const d = document.getElementById('logDate').value;
+        if (!d) return;
+        appState.logs = appState.logs.filter(l => l.date !== d);
+        if (selectedData.flow !== 'None' || selectedData.pain.length || selectedData.mood.length || selectedData.digestion.length) {
+            appState.logs.push({ date: d, timestamp: new Date(d).getTime(), ...selectedData });
+            appState.logs.sort((a, b) => b.timestamp - a.timestamp);
         }
-        logs = logs.filter(l => l.date !== dateStr);
-        logs.push({ date: dateStr, timestamp: new Date(dateStr).getTime(), flow: selectedSymptoms.flow, pain: [...selectedSymptoms.pain], mood: [...selectedSymptoms.mood] });
-        logs.sort((a, b) => b.timestamp - a.timestamp);
-        refreshUI();
+        localStorage.setItem('regle_db_v2', JSON.stringify(appState));
+        closeLayer();
     }
 
-    function setupWeekdayHeader() {
-        const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-        document.getElementById('weekdayHeader').innerHTML = days.map(d => `<div class="weekday">${d}</div>`).join('');
+    /* ENGINE & UI RENDER */
+    function refreshUI() {
+        const flows = appState.logs.filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => b.timestamp - a.timestamp);
+        if(flows.length > 0) {
+            const next = new Date(flows[0].date);
+            next.setDate(next.getDate() + appState.cycle);
+            const diff = Math.ceil((next - new Date().setHours(0,0,0,0)) / 86400000);
+            
+            document.getElementById('heroDays').innerText = Math.abs(diff);
+            document.getElementById('heroLabel').innerText = diff > 0 ? "Days Till Period" : (diff===0 ? "Due Today" : "Days Late");
+            
+            // Generate Dynamic Body Content based on cycle day
+            const cycleDay = diff > 0 ? (appState.cycle - diff) : 1;
+            renderDynamicPhase(cycleDay);
+        }
+
+        renderCalendar();
+        
+        // Render Insights
+        const historyHTML = appState.logs.slice(0,5).map(l => {
+            const tags = [...l.pain, ...l.mood].join(', ');
+            return `<div style="padding:10px 0; border-bottom:1px solid #222;">
+                <strong>${l.date.slice(5)}</strong> - <span style="color:var(--accent)">${l.flow}</span><br>
+                <span style="font-size:13px; color:#888;">${tags || 'No symptoms'}</span>
+            </div>`;
+        }).join('');
+        document.getElementById('historyList').innerHTML = historyHTML || 'No data.';
+        document.getElementById('stat-cycle').innerText = appState.cycle;
+        document.getElementById('stat-period').innerText = appState.period;
+    }
+
+    function renderDynamicPhase(day) {
+        let phaseKey = 'luteal';
+        if (day >= 1 && day <= appState.period) phaseKey = 'menstrual';
+        else if (day > appState.period && day <= 13) phaseKey = 'follicular';
+        else if (day >= 14 && day <= 16) phaseKey = 'ovulation';
+
+        const data = phaseDatabase[phaseKey];
+        const roleContent = appState.role === 'woman' ? data.her : data.partner;
+
+        document.getElementById('dynamic-phase-content').innerHTML = `
+            <div class="card" style="border-left: 4px solid var(--accent);">
+                <h4>${data.name}</h4>
+                <p style="color:var(--subtext); font-size:14px; margin-bottom:15px; font-weight:600;">${data.subtitle}</p>
+                ${roleContent}
+            </div>
+        `;
     }
 
     function changeMonth(delta) { currentCalDate.setMonth(currentCalDate.getMonth() + delta); renderCalendar(); }
@@ -400,122 +498,25 @@
     function renderCalendar() {
         const year = currentCalDate.getFullYear();
         const month = currentCalDate.getMonth();
-        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        document.getElementById('calMonthYear').innerText = `${monthNames[month]} ${year}`;
-
+        document.getElementById('calMonthYear').innerText = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+        
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const calContainer = document.getElementById('calDays');
-        calContainer.innerHTML = '';
-        const todayStr = new Date().toISOString().split('T')[0];
-        const predictions = generatePredictions();
-
-        for (let i = firstDay; i > 0; i--) calContainer.appendChild(document.createElement('div'));
-
-        for (let i = 1; i <= daysInMonth; i++) {
-            const div = document.createElement('div');
-            div.className = 'day current-month';
-            div.innerText = i;
-            const dateStr = new Date(year, month, i).toISOString().split('T')[0];
-
-            if (dateStr === todayStr) div.classList.add('today');
-            if (logs.find(l => l.date === dateStr)) div.classList.add('logged');
-            if (predictions.period.has(dateStr)) div.classList.add('predicted');
-            if (predictions.ovulation.has(dateStr)) div.classList.add('ovulation');
-
-            calContainer.appendChild(div);
-        }
-    }
-
-    function getAverageCycles() {
-        if (logs.length < 2) return { cycle: 28, period: 5 };
-        const sortedLogs = [...logs].sort((a, b) => a.timestamp - b.timestamp);
-        const cycles = [], periods = [];
-        let curStart = null, consec = 0;
-
-        for(let i=0; i<sortedLogs.length; i++) {
-            if(i > 0 && (sortedLogs[i].timestamp - sortedLogs[i-1].timestamp)/(86400000) > 3) {
-                if(consec > 0) periods.push(consec);
-                if(curStart) {
-                    const diff = (sortedLogs[i].timestamp - curStart.timestamp)/(86400000);
-                    if(diff > 15 && diff < 50) cycles.push(diff);
-                }
-                curStart = sortedLogs[i]; consec = 1;
-            } else { curStart = curStart || sortedLogs[i]; consec++; }
-        }
-        if(consec > 0) periods.push(consec);
-        const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null;
-        return { cycle: avg(cycles) || 28, period: avg(periods) || 5 };
-    }
-
-    function generatePredictions() {
-        const period = new Set(), ovulation = new Set();
-        if (logs.length === 0) return { period, ovulation };
-        const avgs = getAverageCycles();
-        const lastDate = new Date([...logs].sort((a, b) => b.timestamp - a.timestamp)[0].date);
-
-        for (let i = 1; i <= 6; i++) {
-            const next = new Date(lastDate); next.setDate(next.getDate() + (avgs.cycle * i));
-            for(let p=0; p<avgs.period; p++) {
-                const pDay = new Date(next); pDay.setDate(pDay.getDate() + p);
-                period.add(pDay.toISOString().split('T')[0]);
-            }
-            const ovu = new Date(next); ovu.setDate(ovu.getDate() + (avgs.cycle - 14));
-            ovulation.add(ovu.toISOString().split('T')[0]);
-        }
-        return { period, ovulation };
-    }
-
-    function runAnalysis() {
-        const avgs = getAverageCycles();
-        if(logs.length < 1) {
-            document.getElementById('avgCycle').innerText = '--'; document.getElementById('avgPeriod').innerText = '--'; document.getElementById('heroDays').innerText = '--'; return;
-        }
-
-        document.getElementById('avgCycle').innerText = avgs.cycle; document.getElementById('avgPeriod').innerText = avgs.period;
-        const next = new Date([...logs].sort((a,b)=>b.timestamp-a.timestamp)[0].date);
-        next.setDate(next.getDate() + avgs.cycle);
+        const cal = document.getElementById('calDays');
+        cal.innerHTML = ['S','M','T','W','T','F','S'].map(d => `<div class="weekday">${d}</div>`).join('');
         
-        const today = new Date(); today.setHours(0,0,0,0);
-        const diff = Math.ceil((next - today) / 86400000);
-
-        if(diff > 0) {
-            document.getElementById('heroDays').innerText = diff; document.getElementById('heroLabel').innerText = "Days Till Period";
-            document.getElementById('heroDate').innerText = `Est: ${next.toLocaleDateString(undefined, {month:'short', day:'numeric'})}`;
-        } else if (diff === 0) {
-            document.getElementById('heroDays').innerText = "Due"; document.getElementById('heroLabel').innerText = "Status";
-            document.getElementById('heroDate').innerText = "Expected Today";
-        } else {
-            document.getElementById('heroDays').innerText = Math.abs(diff); document.getElementById('heroLabel').innerText = "Days Late";
-            document.getElementById('heroDate').innerText = `Est was: ${next.toLocaleDateString(undefined, {month:'short', day:'numeric'})}`;
-        }
-        if (currentRole === 'partner') updatePartnerGuidance(diff, avgs.cycle);
-    }
-
-    function updatePartnerGuidance(diff, cycle) {
-        const day = cycle - diff;
-        const phase = document.getElementById('guidePhase'), state = document.getElementById('guideState'), action = document.getElementById('guideAction');
-        if (day >= 1 && day <= 5) {
-            phase.innerText = "Menstrual Phase (Days 1–5)";
-            state.innerText = "Lowest hormones. She may experience cramping, fatigue, and lower social energy.";
-            action.innerText = "Offer a heating pad, handle extra chores, and give her space without taking low energy personally.";
-        } else if (day > 5 && day <= 13) {
-            phase.innerText = "Follicular Phase (Days 6–13)";
-            state.innerText = "Estrogen rising sharply. Energy, optimism, and mental clarity peak.";
-            action.innerText = "Great time for dates, fun outings, and tackling plans together while energy is high.";
-        } else if (day > 13 && day <= 16) {
-            phase.innerText = "Ovulation Phase (Days 14–16)";
-            state.innerText = "Peak estrogen. She may feel highly confident, social, and vibrant.";
-            action.innerText = "Support social plans, celebrate her wins, and enjoy high connection.";
-        } else {
-            phase.innerText = "Luteal / PMS Phase (Days 17–28)";
-            state.innerText = "Progesterone peaks then drops. Bloating, mood sensitivity, or cravings are common.";
-            action.innerText = "Exercise extra patience, offer snacks without judgment, and validate feelings.";
+        for (let i = 0; i < firstDay; i++) cal.innerHTML += `<div></div>`;
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            let cls = 'day current-month';
+            if (dStr === todayStr) cls += ' today';
+            if (appState.logs.find(l => l.date === dStr && l.flow !== 'None')) cls += ' logged';
+            cal.innerHTML += `<div class="${cls}" onclick="openLayer('logDrawer','Log Data'); document.getElementById('logDate').value='${dStr}'; loadLog('${dStr}');">${i}</div>`;
         }
     }
-
-    function exportData() { navigator.clipboard.writeText(localStorage.getItem(DB_NAME)).then(()=>alert('Data copied! Paste in Notes.')); }
-    function importData() { const d = prompt("Paste data:"); if(d){ try{ JSON.parse(d); localStorage.setItem(DB_NAME, d); logs=JSON.parse(d); refreshUI(); alert('Restored!'); }catch(e){ alert('Invalid data.'); } } }
 </script>
 </body>
 </html>
