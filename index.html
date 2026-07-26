@@ -20,8 +20,7 @@
         --accent: #D2042D; 
         --accent-muted: rgba(210, 4, 45, 0.15);
         --accent-glow: rgba(210, 4, 45, 0.5);
-        --ovulation: #30D158;
-        --safetv: env(safe-area-inset-top, 40px); 
+        --safetv: max(env(safe-area-inset-top), 20px); 
         --safebv: env(safe-area-inset-bottom, 30px);
     }
 
@@ -39,8 +38,10 @@
 
     /* BRANDING & BOOT */
     #boot-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-    .brand-logo { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; color: var(--text); position: absolute; text-align: center; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1); font-size: 56px; text-shadow: 0 0 30px rgba(255,255,255,0.1); transition: all 0.9s cubic-bezier(0.8, 0, 0.2, 1); opacity: 0; }
-    .brand-logo.header-mode { top: calc(var(--safetv) + 12px); left: 50%; transform: translate(-50%, 0) scale(0.40); text-shadow: 0 0 15px var(--accent-glow); }
+    
+    /* Fixed Logo positioning to prevent Safari URL bar from cutting it in half */
+    .brand-logo { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; color: var(--text); position: absolute; text-align: center; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(1); font-size: 56px; text-shadow: 0 0 30px rgba(255,255,255,0.1); transition: all 0.9s cubic-bezier(0.8, 0, 0.2, 1); opacity: 0; z-index: 200; pointer-events: none;}
+    .brand-logo.header-mode { top: clamp(65px, calc(var(--safetv) + 25px), 100px); left: 50%; transform: translate(-50%, 0) scale(0.40); text-shadow: 0 0 15px var(--accent-glow); }
 
     /* ANIMATIONS */
     .stagger-1 { animation: slideUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards; opacity: 0; }
@@ -51,12 +52,12 @@
 
     /* LAYOUT */
     #app-container { height: 100vh; display: flex; flex-direction: column; opacity: 0; transition: opacity 0.6s ease; }
-    .app-header { padding: calc(10px + var(--safetv)) 20px 10px 20px; height: calc(55px + var(--safetv)); display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .app-header { padding: calc(10px + var(--safetv)) 20px 10px 20px; height: calc(75px + var(--safetv)); display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .view-container { flex: 1; overflow-y: auto; padding: 20px 15px calc(110px + var(--safebv)) 15px; display: none; }
     .view-container.active { display: block; animation: popIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
 
-    /* THE CYCLE RING (CLUE-STYLE) */
-    .ring-container { position: relative; width: 220px; height: 220px; margin: 20px auto 30px auto; }
+    /* THE CYCLE RING */
+    .ring-container { position: relative; width: 220px; height: 220px; margin: 10px auto 30px auto; }
     .cycle-svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible;}
     .ring-bg { fill: none; stroke: #1a1a1c; stroke-width: 12; }
     .ring-period { fill: none; stroke: var(--accent); stroke-width: 12; stroke-dasharray: 565.48; stroke-dashoffset: 565.48; transition: stroke-dashoffset 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); filter: drop-shadow(0 0 8px var(--accent-glow)); stroke-linecap: round;}
@@ -71,7 +72,6 @@
     .btn:active { transform: scale(0.95); background: #2c2c2e; }
     .btn-main { background: var(--accent); color: white; border: none; font-size: 18px; font-weight: 700; padding: 20px; border-radius: 20px; width: 100%; box-shadow: 0 4px 20px var(--accent-glow); transition: transform 0.2s; }
     .btn-main:active { transform: scale(0.95); background: #b00325;}
-    
     input[type="date"] { width: 100%; padding: 20px; background: #1c1c1e; border: 1px solid var(--border); border-radius: 18px; color: var(--text); font-size: 18px; font-weight: 600; text-align: center; -webkit-appearance: none; font-family: inherit; }
 
     /* BOTTOM NAV */
@@ -81,7 +81,7 @@
     .nav-icon { font-size: 24px; transition: transform 0.3s; opacity: 0.5;}
     .nav-item.active .nav-icon { opacity: 1; transform: translateY(-2px); filter: drop-shadow(0 2px 8px rgba(255,255,255,0.3));}
 
-    /* LOGGING DRAWER (PREMIUM MULTI-SELECT) */
+    /* LOGGING DRAWER */
     .drawer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 2000; transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); display: flex; flex-direction: column; }
     .drawer.open { transform: translateY(0); }
     .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: calc(15px + var(--safetv)) 20px 15px 20px; background: rgba(0,0,0,0.9); border-bottom: 1px solid var(--border); z-index: 10; }
@@ -101,7 +101,12 @@
     #toast { position: fixed; bottom: calc(100px + var(--safebv)); left: 50%; transform: translateX(-50%) translateY(50px); background: #2c2c2e; color: white; padding: 14px 24px; border-radius: 30px; font-size: 15px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.8); opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 9999; border: 1px solid #444;}
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* EXPANDABLE INSIGHTS */
+    /* INSIGHTS / ANALYTICS UI */
+    .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #222; }
+    .prog-bar-bg { width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    .prog-bar-fill { height: 100%; background: var(--accent); border-radius: 4px; }
+    .cycle-history-card { background: #161618; padding: 15px; border-radius: 16px; margin-bottom: 10px; border: 1px solid #2a2a2c; display: flex; justify-content: space-between; align-items: center; }
+
     details { background: #161618; border-radius: 20px; margin-bottom: 12px; border: 1px solid #2a2a2c; transition: all 0.3s;}
     summary { padding: 20px; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; color: var(--text);}
     summary::-webkit-details-marker { display: none; }
@@ -160,11 +165,8 @@
         <!-- CYCLE RING VISUALIZATION -->
         <div class="ring-container stagger-1">
             <svg class="cycle-svg" viewBox="0 0 200 200">
-                <!-- Background track -->
                 <circle class="ring-bg" cx="100" cy="100" r="90"></circle>
-                <!-- Period indicator (red zone) -->
                 <circle class="ring-period" id="svg-period" cx="100" cy="100" r="90"></circle>
-                <!-- Current day tracker (white line) -->
                 <circle class="ring-tracker" id="svg-tracker" cx="100" cy="100" r="90"></circle>
             </svg>
             <div class="ring-text">
@@ -198,9 +200,16 @@
         </div>
     </div>
 
-    <!-- TAB 3: INSIGHTS (ANALYTICS ENGINE) -->
+    <!-- TAB 3: INSIGHTS (ADVANCED ANALYTICS) -->
     <div class="view-container" id="tab-analysis">
-        <h2>Biological Analysis</h2>
+        <h2>Analytics Engine</h2>
+        
+        <div style="text-align:center; margin-bottom:20px;">
+            <span style="background:#1c1c1e; padding:6px 12px; border-radius:12px; font-size:12px; font-weight:700; color:var(--accent); border:1px solid var(--border);" id="engine-status">
+                Engine Calibrating...
+            </span>
+        </div>
+
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
             <div class="card" style="text-align: center; padding: 25px 15px;">
                 <div style="font-size: 36px; font-weight: 800; margin-bottom: 5px; color:var(--text);" id="stat-cycle">--</div>
@@ -211,9 +220,17 @@
                 <div style="font-size: 12px; color:var(--subtext); text-transform:uppercase; font-weight:700; letter-spacing:1px;">Avg Period</div>
             </div>
         </div>
+
         <div class="card">
-            <h3 style="margin-bottom: 15px;">Recent Logs</h3>
-            <div id="historyList" style="font-size: 15px; color: var(--subtext);">No data yet.</div>
+            <h3 style="margin-bottom: 5px;">Symptom Profile</h3>
+            <p style="font-size:13px; color:var(--subtext); margin-bottom:20px;">Most frequent symptoms based on historical logs.</p>
+            <div id="symptom-distribution"></div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 5px;">Cycle History</h3>
+            <p style="font-size:13px; color:var(--subtext); margin-bottom:20px;">Your biological timeline.</p>
+            <div id="cycle-history-list"></div>
         </div>
     </div>
 
@@ -242,7 +259,7 @@
     <button class="nav-item" onclick="switchTab('tab-settings', this)"><div class="nav-icon">⚙️</div>Settings</button>
 </nav>
 
-<!-- LOGGING DRAWER (CLUE/FLO STYLE MULTI-GRID) -->
+<!-- LOGGING DRAWER -->
 <div class="drawer" id="logDrawer">
     <div class="drawer-header">
         <button class="back-btn" onclick="haptic(1); closeLayer()">← Back</button>
@@ -306,7 +323,6 @@
 
 <script>
     /* HAPTIC ENGINE */
-    // type 1 = light tap, type 2 = heavy tap
     function haptic(type = 1) {
         if (navigator.vibrate) {
             if (type === 1) navigator.vibrate(30); 
@@ -334,7 +350,7 @@
             shield.style.opacity = '0';
             setTimeout(() => {
                 shield.style.display = 'none';
-                const stored = localStorage.getItem('regle_db_v4');
+                const stored = localStorage.getItem('regle_db_v5');
                 if (stored) { 
                     appState = JSON.parse(stored); 
                     app.style.opacity = '1';
@@ -383,18 +399,19 @@
         }
     };
 
-    /* APP STATE & ANALYTICS ENGINE */
+    /* APP STATE */
     let appState = { role: 'woman', calcCycle: 28, calcPeriod: 5, logs: [] };
     let currentCalDate = new Date();
     let selectedData = { flow: 'None', pain: [], mood: [], digestion: [] };
     let obRole = 'woman';
+    let cycleHistoryData = []; // Populated by engineCalculate()
 
     function finishOb() {
         appState.role = obRole;
         const d = document.getElementById('ob-date').value;
         if(d) appState.logs.push({date: d, timestamp: new Date(d).getTime(), flow: 'Medium', pain:[], mood:[], digestion:[]});
         
-        localStorage.setItem('regle_db_v4', JSON.stringify(appState));
+        localStorage.setItem('regle_db_v5', JSON.stringify(appState));
         
         document.getElementById('onboarding').style.opacity = '0';
         setTimeout(() => {
@@ -407,7 +424,7 @@
 
     function switchRole(role) { 
         appState.role = role; 
-        localStorage.setItem('regle_db_v4', JSON.stringify(appState));
+        localStorage.setItem('regle_db_v5', JSON.stringify(appState));
         refreshUI(); 
     }
     
@@ -488,37 +505,59 @@
             appState.logs.sort((a, b) => b.timestamp - a.timestamp);
         }
         
-        localStorage.setItem('regle_db_v4', JSON.stringify(appState));
+        localStorage.setItem('regle_db_v5', JSON.stringify(appState));
         showToast('Log Saved');
         closeLayer();
     }
 
-    /* PREDICTIVE ALGORITHM (Analyzes history to find true averages) */
+    /* MASSIVE PREDICTIVE ALGORITHM */
     function engineCalculate() {
-        const flows = [...appState.logs].filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => a.timestamp - b.timestamp);
-        if (flows.length < 2) return;
+        // Find all days with actual flow, sorted oldest to newest
+        const flowLogs = [...appState.logs].filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => a.timestamp - b.timestamp);
+        cycleHistoryData = [];
+        
+        if (flowLogs.length === 0) return;
 
-        let cycles = [], periods = [];
-        let curStart = flows[0], consec = 1;
-
-        for (let i = 1; i < flows.length; i++) {
-            const diffDays = (flows[i].timestamp - flows[i-1].timestamp) / 86400000;
-            if (diffDays > 3) {
-                periods.push(consec);
-                const cycleLen = (flows[i].timestamp - curStart.timestamp) / 86400000;
-                if (cycleLen > 18 && cycleLen < 45) cycles.push(cycleLen); // Ignore outliers
-                curStart = flows[i];
-                consec = 1;
+        let currentCycle = { start: flowLogs[0], periodLen: 1, cycleLen: null };
+        
+        for (let i = 1; i < flowLogs.length; i++) {
+            const diffDays = (flowLogs[i].timestamp - flowLogs[i-1].timestamp) / 86400000;
+            
+            // If gap is more than 5 days, it's a new cycle
+            if (diffDays > 5) {
+                currentCycle.cycleLen = (flowLogs[i].timestamp - currentCycle.start.timestamp) / 86400000;
+                cycleHistoryData.push(currentCycle);
+                
+                // Start tracking the new cycle
+                currentCycle = { start: flowLogs[i], periodLen: 1, cycleLen: null };
             } else {
-                consec++;
+                // Same cycle period tracking
+                currentCycle.periodLen = Math.max(currentCycle.periodLen, Math.floor((flowLogs[i].timestamp - currentCycle.start.timestamp)/86400000) + 1);
             }
         }
-        periods.push(consec);
-
-        if (cycles.length > 0) appState.calcCycle = Math.round(cycles.reduce((a,b)=>a+b,0)/cycles.length);
-        if (periods.length > 0) appState.calcPeriod = Math.round(periods.reduce((a,b)=>a+b,0)/periods.length);
         
-        // Safety bounds
+        // Push the ongoing cycle
+        cycleHistoryData.push(currentCycle);
+
+        // Calculate averages from completed cycles
+        let totalCycle = 0, validCycles = 0;
+        let totalPeriod = 0, validPeriods = 0;
+
+        cycleHistoryData.forEach(c => {
+            if (c.cycleLen && c.cycleLen >= 20 && c.cycleLen <= 45) { // Filter anomalies
+                totalCycle += c.cycleLen;
+                validCycles++;
+            }
+            if (c.periodLen > 0 && c.periodLen <= 10) {
+                totalPeriod += c.periodLen;
+                validPeriods++;
+            }
+        });
+
+        if (validCycles > 0) appState.calcCycle = Math.round(totalCycle / validCycles);
+        if (validPeriods > 0) appState.calcPeriod = Math.round(totalPeriod / validPeriods);
+        
+        // Failsafes
         if(appState.calcCycle < 21) appState.calcCycle = 28;
         if(appState.calcPeriod > 10) appState.calcPeriod = 5;
     }
@@ -533,61 +572,31 @@
         if(flows.length > 0) {
             const lastStart = new Date(flows[0].date);
             const today = new Date(); today.setHours(0,0,0,0);
-            
-            // Current day of cycle
             const dayOfCycle = Math.floor((today - lastStart) / 86400000) + 1;
-            
-            // Next period
-            const next = new Date(lastStart);
-            next.setDate(next.getDate() + appState.calcCycle);
-            const diffTillNext = Math.ceil((next - today) / 86400000);
 
-            // Update Ring UI
+            // Dashboard
             document.getElementById('heroDays').innerText = dayOfCycle > 0 ? dayOfCycle : 1;
             document.getElementById('heroLabel').innerText = "Day of Cycle";
-            updateRingSVG(dayOfCycle, appState.calcCycle, appState.calcPeriod);
-            
-            // Render Biological Insights
+            updateRingSVG(dayOfCycle > 0 ? dayOfCycle : 1, appState.calcCycle, appState.calcPeriod);
             renderDynamicPhase(dayOfCycle > 0 ? dayOfCycle : 1);
         }
 
         renderCalendar();
-        
-        // Render Insights Tab
-        const histContainer = document.getElementById('historyList');
-        const sorted = appState.logs.slice(0,10); // Last 10 logs
-        histContainer.innerHTML = sorted.length ? sorted.map(l => {
-            const tags = [...l.pain, ...l.mood, ...l.digestion].join(', ');
-            return `<div style="padding:15px 0; border-bottom:1px solid #222;">
-                <div style="font-weight:600; font-size:16px;">${new Date(l.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})} <span style="color:var(--accent); float:right;">${l.flow !== 'None' ? l.flow : ''}</span></div>
-                <div style="font-size:14px; color:#888; margin-top:4px;">${tags || 'No symptoms'}</div>
-            </div>`;
-        }).join('') : 'No data.';
-        
-        document.getElementById('stat-cycle').innerText = appState.calcCycle;
-        document.getElementById('stat-period').innerText = appState.calcPeriod;
+        renderInsights();
     }
 
     /* SVG RING MATH */
     function updateRingSVG(currentDay, cycleLen, periodLen) {
-        const C = 2 * Math.PI * 90; // Circumference (r=90) ≈ 565.48
-        
-        // 1. Period Red Zone Arc
+        const C = 2 * Math.PI * 90; 
         const periodFraction = periodLen / cycleLen;
         const periodOffset = C - (periodFraction * C);
         document.getElementById('svg-period').style.strokeDashoffset = periodOffset;
 
-        // 2. Current Day White Line
-        // Needs to accurately place a short line at the correct percentage around the circle
-        const dayFraction = (currentDay - 1) / cycleLen; 
-        const trackerLength = 15; // length of the white dash
+        let dayFraction = (currentDay - 1) / cycleLen; 
+        if (dayFraction > 1) dayFraction = 1; // Don't overflow the circle if late
         
-        // The stroke-dasharray format: [dash_length, gap_length]
-        // We set the gap to the full circumference so it only draws one dash.
         const tracker = document.getElementById('svg-tracker');
-        tracker.style.strokeDasharray = `${trackerLength} ${C}`;
-        
-        // Offset determines position. It draws backwards, so we do C - distance
+        tracker.style.strokeDasharray = `15 ${C}`;
         tracker.style.strokeDashoffset = C - (dayFraction * C);
     }
 
@@ -609,6 +618,79 @@
         `;
     }
 
+    /* DEEP ANALYTICS RENDERER */
+    function renderInsights() {
+        document.getElementById('stat-cycle').innerText = appState.calcCycle;
+        document.getElementById('stat-period').innerText = appState.calcPeriod;
+
+        const totalTracked = cycleHistoryData.length;
+        const statusEl = document.getElementById('engine-status');
+        if (totalTracked <= 1) {
+            statusEl.innerText = "Engine Calibrating (Need More Data)";
+            statusEl.style.color = "#ff9f0a";
+        } else {
+            statusEl.innerText = `Calibrated with ${totalTracked} Cycles`;
+            statusEl.style.color = "#30D158";
+        }
+
+        // Symptom Distribution Engine
+        let sympCounts = {};
+        let totalLogs = 0;
+        appState.logs.forEach(l => {
+            const allSymp = [...l.pain, ...l.mood, ...(l.digestion||[])];
+            if(allSymp.length > 0) totalLogs++;
+            allSymp.forEach(s => { sympCounts[s] = (sympCounts[s] || 0) + 1; });
+        });
+
+        const sortedSymp = Object.entries(sympCounts).sort((a,b) => b[1] - a[1]).slice(0, 4);
+        
+        let sympHTML = "";
+        if (sortedSymp.length === 0) {
+            sympHTML = "<div style='color:var(--subtext); font-size:14px;'>No symptom data logged yet.</div>";
+        } else {
+            sortedSymp.forEach(([name, count]) => {
+                const perc = Math.round((count / totalLogs) * 100);
+                sympHTML += `
+                <div class="stat-row">
+                    <div style="flex:1;">
+                        <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:600;">
+                            <span>${name}</span>
+                            <span>${perc}%</span>
+                        </div>
+                        <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${perc}%;"></div></div>
+                    </div>
+                </div>`;
+            });
+        }
+        document.getElementById('symptom-distribution').innerHTML = sympHTML;
+
+        // Cycle History Timeline
+        let historyHTML = "";
+        const reversedHistory = [...cycleHistoryData].reverse(); // Newest first
+        
+        if (reversedHistory.length === 0) {
+            historyHTML = "<div style='color:var(--subtext); font-size:14px;'>Awaiting cycle completion.</div>";
+        } else {
+            reversedHistory.forEach((c, index) => {
+                const dateStr = new Date(c.start.date).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+                const isCurrent = index === 0 && !c.cycleLen;
+                const lengthDisplay = isCurrent ? "Ongoing" : `${c.cycleLen} Days`;
+                
+                historyHTML += `
+                <div class="cycle-history-card">
+                    <div>
+                        <div style="font-weight:700; font-size:16px;">${dateStr}</div>
+                        <div style="font-size:12px; color:var(--subtext); margin-top:4px;">Period: ${c.periodLen} Days</div>
+                    </div>
+                    <div style="font-weight:800; font-size:18px; color:${isCurrent ? 'var(--subtext)' : 'var(--text)'};">
+                        ${lengthDisplay}
+                    </div>
+                </div>`;
+            });
+        }
+        document.getElementById('cycle-history-list').innerHTML = historyHTML;
+    }
+
     /* CALENDAR RENDERER */
     function changeMonth(delta) { currentCalDate.setMonth(currentCalDate.getMonth() + delta); renderCalendar(); }
 
@@ -626,11 +708,11 @@
         
         const todayStr = new Date().toISOString().split('T')[0];
         
-        // Calculate Predictions
+        // Predictions
         let predictedSet = new Set();
         const flows = appState.logs.filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => b.timestamp - a.timestamp);
         if(flows.length > 0) {
-            const lastStart = new Date(flows[0].date);
+            const lastStart = new Date(flows[flows.length-1].date);
             for(let i=1; i<=3; i++) {
                 const n = new Date(lastStart); n.setDate(n.getDate() + (appState.calcCycle * i));
                 for(let p=0; p<appState.calcPeriod; p++) {
