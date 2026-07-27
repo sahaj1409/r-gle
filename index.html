@@ -7,21 +7,28 @@
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Règle | Clinical Engine</title>
+<title>Règle | Advanced Clinical Engine</title>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&display=swap');
+    
     :root {
         --bg: #000000; --card: #121212; --border: #222222; --text: #F5F5F7; --subtext: #8E8E93;
         --accent: #8C1534; --accent-muted: rgba(140, 21, 52, 0.15); --accent-glow: rgba(140, 21, 52, 0.6);
         --partner-accent: #0A84FF; --partner-muted: rgba(10, 132, 255, 0.15); --partner-glow: rgba(10, 132, 255, 0.6);
-        --estrogen: #0A84FF; --progesterone: #FF9F0A; --safetv: max(env(safe-area-inset-top), 20px); --safebv: max(env(safe-area-inset-bottom), 30px);
+        --estrogen: #0A84FF; --progesterone: #FF9F0A; --bbt-line: #FF375F;
+        --safetv: max(env(safe-area-inset-top), 20px); --safebv: max(env(safe-area-inset-bottom), 30px);
     }
+    
     body.partner-active { --accent: var(--partner-accent); --accent-muted: var(--partner-muted); --accent-glow: var(--partner-glow); }
+    
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; margin: 0; padding: 0; }
+    
     body { background-color: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; font-size: 16px; overscroll-behavior-y: none; overflow: hidden; transition: --accent 0.5s ease; }
+    
     h2 { font-size: 28px; font-weight: 800; margin-bottom: 15px; letter-spacing: -0.5px; }
     h3 { font-size: 20px; font-weight: 700; margin-bottom: 15px; }
     h4 { font-size: 13px; margin-bottom: 8px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800; transition: color 0.5s;}
+    p { line-height: 1.5; }
     
     /* BOOT SEQUENCE */
     #boot-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 9998; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: opacity 0.6s ease; }
@@ -59,47 +66,71 @@
     .btn-main { background: var(--accent); color: white; border: none; font-size: 17px; font-weight: 700; padding: 20px; border-radius: 20px; width: 100%; box-shadow: 0 4px 20px var(--accent-glow); transition: transform 0.2s, background 0.5s, box-shadow 0.5s; flex: 2; }
     .btn-main:active { transform: scale(0.95); filter: brightness(0.8);}
     .btn-secondary { background: #1c1c1e; border: 1px solid #333; color: var(--text); padding: 20px 15px; border-radius: 20px; font-size: 14px; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.2s; flex: 1; text-align: center; line-height: 1.2; display: flex; justify-content: center; align-items: center;}
-    input { width: 100%; padding: 20px; background: #1c1c1e; border: 1px solid var(--border); border-radius: 18px; color: var(--text); font-size: 18px; font-weight: 600; text-align: center; font-family: inherit; margin-bottom: 20px; -webkit-appearance: none;}
+    
+    input[type="date"], input[type="number"], select, textarea { width: 100%; padding: 20px; background: #1c1c1e; border: 1px solid var(--border); border-radius: 18px; color: var(--text); font-size: 18px; font-weight: 600; text-align: center; font-family: inherit; margin-bottom: 20px; -webkit-appearance: none; outline: none;}
+    textarea { text-align: left; resize: none; min-height: 100px; font-size: 15px; font-weight: 500; }
+    input:focus, textarea:focus { border-color: var(--accent); }
     .input-label { color: var(--subtext); font-size: 12px; font-weight: 700; text-transform: uppercase; text-align: center; display: block; margin-bottom: 8px; letter-spacing: 1px; }
     
     /* MODALS & DRAWERS */
-    #erase-modal, #file-modal, #print-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(15px); z-index: 9999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; padding: 20px; }
+    #erase-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(15px); z-index: 9999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; padding: 20px; }
     .modal-box { background: var(--card); border: 1px solid #333; border-radius: 24px; padding: 30px 20px; width: 100%; max-width: 350px; text-align: center; transform: scale(0.9); transition: transform 0.3s; }
     .modal-show { opacity: 1 !important; display: flex !important; }
     .modal-show .modal-box { transform: scale(1); }
+    
     .drawer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); z-index: 2000; transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); display: flex; flex-direction: column; }
     .drawer.open { transform: translateY(0); }
-    .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: calc(15px + var(--safetv)) 20px 15px 20px; background: rgba(0,0,0,0.9); border-bottom: 1px solid var(--border); z-index: 10; }
+    .drawer-header { display: flex; align-items: center; justify-content: space-between; padding: calc(15px + var(--safetv)) 20px 15px 20px; background: rgba(0,0,0,0.9); border-bottom: 1px solid var(--border); z-index: 10; backdrop-filter: blur(10px);}
     .back-btn { background: #1c1c1e; border: 1px solid #333; color: var(--text); padding: 10px 16px; border-radius: 20px; font-size: 15px; font-weight: 600; cursor: pointer; }
     .drawer-content { flex: 1; overflow-y: auto; padding-bottom: calc(100px + var(--safebv)); }
     
     /* LOGGING CHIPS */
-    .log-group { margin-bottom: 30px; }
-    .log-title { font-size: 13px; color: var(--subtext); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin: 0 20px 12px 20px; }
+    .log-group { margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 30px;}
+    .log-group:last-child { border-bottom: none; }
+    .log-title { font-size: 13px; color: var(--subtext); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin: 0 20px 15px 20px; display: flex; align-items: center; gap: 8px;}
+    .log-title-icon { font-size: 18px; }
     .chip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; padding: 0 20px; }
-    .chip { background: #1c1c1e; border: 1px solid #2a2a2c; padding: 15px 5px; border-radius: 18px; font-size: 13px; font-weight: 600; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 8px;}
-    .chip span { font-size: 24px; }
-    .chip.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 4px 15px var(--accent-glow); transform: scale(1.05); transition: all 0.3s;}
+    .chip { background: #1c1c1e; border: 1px solid #2a2a2c; padding: 15px 5px; border-radius: 18px; font-size: 12px; font-weight: 700; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 8px; transition: all 0.2s; cursor: pointer;}
+    .chip span { font-size: 26px; }
+    .chip.active { background: var(--accent); border-color: var(--accent); box-shadow: 0 4px 15px var(--accent-glow); transform: scale(1.05); color: white;}
+    
+    /* VAULT TIMELINE */
+    .timeline-item { display: flex; gap: 15px; margin-bottom: 25px; }
+    .timeline-date { min-width: 60px; text-align: center; }
+    .timeline-day { font-size: 24px; font-weight: 800; color: var(--text); }
+    .timeline-month { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; }
+    .timeline-content { flex: 1; background: #1c1c1e; border: 1px solid #2a2a2c; border-radius: 20px; padding: 15px; }
+    .timeline-flow { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #fff;}
+    .timeline-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .timeline-tag { background: #2c2c2e; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; color: #ccc;}
+    .timeline-note { margin-top: 10px; font-size: 13px; color: var(--subtext); font-style: italic; border-left: 2px solid var(--accent); padding-left: 10px;}
     
     /* TOAST & NAV */
-    #toast { position: fixed; bottom: calc(100px + var(--safebv)); left: 50%; transform: translateX(-50%) translateY(50px); background: #2c2c2e; color: white; padding: 14px 24px; border-radius: 30px; font-size: 15px; font-weight: 600; opacity: 0; transition: all 0.4s; z-index: 9999; }
+    #toast { position: fixed; bottom: calc(100px + var(--safebv)); left: 50%; transform: translateX(-50%) translateY(50px); background: #2c2c2e; color: white; padding: 14px 24px; border-radius: 30px; font-size: 15px; font-weight: 600; opacity: 0; transition: all 0.4s; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(10, 10, 10, 0.9); backdrop-filter: blur(20px); padding: 15px 10px calc(15px + var(--safebv)) 10px; border-top: 1px solid rgba(255,255,255,0.05); z-index: 100; display: flex; justify-content: space-around; transition: transform 0.4s; }
-    .nav-item { background: none; border: none; color: var(--subtext); font-size: 11px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 20%; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: rgba(10, 10, 10, 0.9); backdrop-filter: blur(20px); padding: 15px 10px calc(15px + var(--safebv)) 10px; border-top: 1px solid rgba(255,255,255,0.05); z-index: 100; display: flex; justify-content: space-between; transition: transform 0.4s; }
+    .nav-item { background: none; border: none; color: var(--subtext); font-size: 11px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 20%; cursor: pointer;}
     .nav-item.active { color: var(--accent); }
     .nav-item.active .nav-icon { opacity: 1; filter: drop-shadow(0 2px 8px var(--accent-glow)); transform: scale(1.1); transition: all 0.3s;}
     
-    /* CHARTS, AI & CALENDAR */
-    .chart-container { width: 100%; height: 180px; position: relative; margin-top: 15px; }
-    .svg-chart { width: 100%; height: 100%; overflow: visible; }
+    /* CHARTS, METRICS & CALENDAR */
+    .chart-container { width: 100%; height: 180px; position: relative; margin-top: 15px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.03);}
+    .svg-chart { width: 100%; height: 100%; overflow: visible; padding: 10px;}
     .wave-path { fill: none; stroke-width: 3; stroke-linecap: round; }
+    .bbt-path { fill: none; stroke: var(--bbt-line); stroke-width: 2; stroke-linejoin: round; }
+    .bbt-point { fill: var(--bg); stroke: var(--bbt-line); stroke-width: 2; }
     .heatmap-rect { rx: 4px; ry: 4px; transition: fill 0.3s; }
     
+    .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;}
+    .metric-box { background: #1c1c1e; padding: 15px; border-radius: 16px; border: 1px solid #2a2a2c; text-align: center;}
+    .metric-value { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 4px;}
+    .metric-label { font-size: 11px; color: var(--subtext); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;}
+    
     .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .cal-nav { background: #1c1c1e; border: none; color: var(--text); width: 44px; height: 44px; border-radius: 50%; font-size: 18px;}
+    .cal-nav { background: #1c1c1e; border: none; color: var(--text); width: 44px; height: 44px; border-radius: 50%; font-size: 18px; cursor: pointer;}
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
     .weekday { color: var(--subtext); font-size: 12px; font-weight: 800; padding-bottom: 8px;}
-    .day { height: 44px; display: flex; align-items: center; justify-content: center; font-size: 16px; border-radius: 50%; color: #444; font-weight: 600; position: relative;}
+    .day { height: 44px; display: flex; align-items: center; justify-content: center; font-size: 16px; border-radius: 50%; color: #444; font-weight: 600; position: relative; cursor: pointer;}
     .day.current-month { color: var(--text); }
     .day.today { background-color: #2c2c2e; }
     .day.logged { background-color: var(--accent-muted); color: var(--accent); font-weight: 800; border: 1px solid var(--accent-glow);}
@@ -110,20 +141,17 @@
     summary::-webkit-details-marker { display: none; }
     .details-content { padding: 0 20px 20px 20px; font-size: 15px; color: #ccc; line-height: 1.6; }
     
-    .ai-chat-box { background: #1c1c1e; border: 1px solid var(--border); border-radius: 20px; padding: 20px; min-height: 150px; font-size: 15px; line-height: 1.6; color: #e5e5e5; display: flex; flex-direction: column; gap: 15px; }
-    .ai-bubble { background: #2c2c2e; padding: 15px; border-radius: 16px 16px 16px 4px; width: 90%; align-self: flex-start; }
-    .user-bubble { background: var(--accent-muted); border: 1px solid var(--accent); padding: 15px; border-radius: 16px 16px 4px 16px; width: 90%; align-self: flex-end; color: var(--text); }
-    
     /* PRINT STYLES FOR CLINICAL REPORT */
     @media print {
         body { background: white; color: black; overflow: visible; height: auto; }
-        .app-header, .bottom-nav, #boot-screen, .btn, .btn-main, .btn-secondary, .drawer { display: none !important; }
+        .app-header, .bottom-nav, #boot-screen, .btn, .btn-main, .btn-secondary, .drawer, .ring-container { display: none !important; }
         .view-container { display: none !important; }
-        #print-render { display: block !important; padding: 20px; font-family: "Times New Roman", serif; color: black;}
+        #print-render { display: block !important; padding: 20px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: black;}
         .print-card { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; page-break-inside: avoid; }
         .print-title { font-size: 24px; font-weight: bold; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 20px; }
-        .print-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .print-table th, .print-table td { border: 1px solid #999; padding: 8px; text-align: left; font-size: 12px; }
+        .print-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        .print-table th, .print-table td { border: 1px solid #999; padding: 8px; text-align: left; }
+        .print-table th { background: #f0f0f0; font-weight: bold; }
     }
 </style>
 </head>
@@ -136,21 +164,36 @@
 <div id="onboarding" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--bg); z-index:5000; padding:calc(40px + var(--safetv)) 20px 20px; display:none; flex-direction:column; opacity:0; transition:opacity 0.4s; overflow-y:auto;">
     <div style="text-align: center; margin-bottom: 30px;">
         <h2>Engine Calibration</h2>
-        <p style="color: var(--subtext); font-size: 15px;">Configure biological baselines.</p>
+        <p style="color: var(--subtext); font-size: 15px;">Establish biological baselines for the predictive heuristic model.</p>
     </div>
-    <label class="input-label">Date of Last Period Start</label><input type="date" id="ob-date">
-    <label class="input-label">Average Cycle Length (Days)</label><input type="number" id="ob-cycle" value="28" min="15" max="45">
-    <label class="input-label">Average Bleeding Duration (Days)</label><input type="number" id="ob-period" value="5" min="2" max="15">
-    <button class="btn-main" style="margin-top: 20px; margin-bottom: 40px;" onclick="haptic(2); finishOb()">Compile Engine</button>
+    
+    <label class="input-label">Date of Last Period Start</label>
+    <input type="date" id="ob-date">
+    
+    <label class="input-label">Average Cycle Length (Days)</label>
+    <input type="number" id="ob-cycle" value="28" min="15" max="45">
+    
+    <label class="input-label">Average Bleeding Duration (Days)</label>
+    <input type="number" id="ob-period" value="5" min="2" max="15">
+    
+    <label class="input-label" style="margin-top:10px;">Primary Tracking Goal</label>
+    <select id="ob-goal">
+        <option value="health">Holistic Health & Syncing</option>
+        <option value="avoid">Avoid Pregnancy (Symptothermal)</option>
+        <option value="conceive">Target Conception</option>
+    </select>
+    
+    <button class="btn-main" style="margin-top: 30px; margin-bottom: 60px;" onclick="haptic(2); finishOb()">Initialize Architecture</button>
 </div>
 
-<!-- TOAST & MODALS -->
+<!-- MODALS -->
 <div id="toast">Data Synchronized</div>
 <div id="erase-modal">
     <div class="modal-box">
-        <h2 style="margin-bottom: 10px;">Confirm Purge</h2><p style="color: var(--subtext); margin-bottom: 25px;">Permanently wipe all biological archives.</p>
+        <h2 style="margin-bottom: 10px;">Confirm Purge</h2>
+        <p style="color: var(--subtext); margin-bottom: 25px;">This action irreversibly destroys your localized JSON database. Proceed?</p>
         <div style="display: flex; gap: 10px; flex-direction: column;">
-            <button class="btn-main" style="background: #ff453a;" onclick="executeWipe()">Purge Database</button>
+            <button class="btn-main" style="background: #ff453a; color: white;" onclick="executeWipe()">Purge Database</button>
             <button class="btn" onclick="document.getElementById('erase-modal').classList.remove('modal-show')">Abort</button>
         </div>
     </div>
@@ -158,7 +201,7 @@
 
 <div id="app-container">
     <div class="app-header">
-        <div style="width: 40px;"></div><!-- spacer -->
+        <div style="width: 40px; font-weight:800; font-family:'Playfair Display', serif; font-style:italic;">R.</div>
         <button id="partner-toggle" style="background: transparent; border: 1px solid var(--border); color: var(--subtext); padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s;" onclick="togglePartnerMode()">👤 Personal Mode</button>
     </div>
 
@@ -177,7 +220,7 @@
         </div>
         <div style="display: flex; gap: 10px; margin-bottom: 30px;" class="stagger-2">
             <button class="btn-main" id="btn-log-main" onclick="openLayer('logDrawer')">+ Log Biometrics</button>
-            <button class="btn-secondary" id="btn-log-quick" onclick="openLayer('logDrawer'); document.querySelector('#flowSelect .chip[data-val=\'Medium\']').click();">Start<br>Period</button>
+            <button class="btn-secondary" id="btn-log-quick" onclick="startNewPeriod()">Start<br>Period</button>
         </div>
         <div id="dynamic-phase-content" class="stagger-3"></div>
     </div>
@@ -196,60 +239,71 @@
         </div>
     </div>
 
-    <!-- TAB 3: METRICS & HEATMAPS -->
+    <!-- TAB 3: METRICS -->
     <div class="view-container" id="tab-analysis">
         <h2>Endocrine Metrics</h2>
-        <div style="text-align:center; margin-bottom:20px;">
-            <span style="background:#1c1c1e; padding:6px 12px; border-radius:12px; font-size:12px; font-weight:700; color:var(--accent); border:1px solid var(--border);" id="engine-status">Engine Active</span>
+        
+        <div class="metric-grid">
+            <div class="metric-box">
+                <div class="metric-value" id="stat-avg-cycle">--</div>
+                <div class="metric-label">Avg Cycle Length</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-value" id="stat-variance">--</div>
+                <div class="metric-label">Cycle Variance</div>
+            </div>
         </div>
+        
         <div class="card">
             <h3 style="margin-bottom: 5px;">Hormone Kinematics</h3>
-            <p style="font-size:13px; color:var(--subtext);">Mathematical approximation of current levels.</p>
+            <p style="font-size:13px; color:var(--subtext);">Mathematical approximation of standard physiological levels based on current day.</p>
             <div class="chart-container" id="hormone-wave-container"></div>
         </div>
+        
         <div class="card">
-            <h3 style="margin-bottom: 5px;">Symptom Heatmap (6Mo)</h3>
-            <p style="font-size:13px; color:var(--subtext); margin-bottom: 15px;">Frequency distribution of pain & mood anomalies.</p>
+            <h3 style="margin-bottom: 5px;">Basal Body Temperature Plot</h3>
+            <p style="font-size:13px; color:var(--subtext);">Tracking thermal shifts to confirm ovulation in current cycle.</p>
+            <div class="chart-container" id="bbt-chart-container"></div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 5px;">Symptom Distribution</h3>
+            <p style="font-size:13px; color:var(--subtext); margin-bottom: 15px;">Frequency distribution of cognitive and physical anomalies.</p>
             <div class="chart-container" id="heatmap-container"></div>
         </div>
     </div>
 
-    <!-- TAB 4: LOCAL AI INTERFACE -->
-    <div class="view-container" id="tab-ai">
-        <h2>Local Intelligence</h2>
-        <p style="font-size: 13px; color: var(--subtext); margin-bottom: 20px;">On-device generative analysis of your localized health data. No data leaves this device.</p>
-        <div class="ai-chat-box" id="ai-chat-window">
-            <div class="ai-bubble">System Initialized. I am analyzing your historical cycle data, BBT shifts, and logged symptoms. What would you like to know?</div>
-        </div>
-        <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button class="btn" style="flex:1; font-size: 13px; padding: 12px;" onclick="triggerAI('Why am I so tired today?')">Why am I tired?</button>
-            <button class="btn" style="flex:1; font-size: 13px; padding: 12px;" onclick="triggerAI('When is my fertile window?')">Predict Fertility</button>
-        </div>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-             <button class="btn" style="flex:1; font-size: 13px; padding: 12px;" onclick="triggerAI('Summarize my cycle stability.')">Analyze Stability</button>
+    <!-- TAB 4: VAULT (History) -->
+    <div class="view-container" id="tab-vault">
+        <h2>Biomarker Vault</h2>
+        <p style="font-size: 13px; color: var(--subtext); margin-bottom: 25px;">Chronological ledger of all logged physiological data and clinical notes.</p>
+        <div id="vault-list">
+            <!-- Populated via JS -->
         </div>
     </div>
 
     <!-- TAB 5: CONFIG -->
     <div class="view-container" id="tab-settings">
-        <h2>Engine Configuration</h2>
+        <h2>System Configuration</h2>
         <div class="card">
-            <h4 style="margin-bottom: 15px;">Clinical Reporting</h4>
-            <p style="font-size: 13px; color: var(--subtext); margin-bottom: 20px;">Generate a secure, printable PDF report for medical consultations. Computed locally.</p>
-            <button class="btn-main" onclick="generateClinicalReport()">📄 Generate OBGYN Report</button>
+            <h4 style="margin-bottom: 15px;">Clinical Reporting Engine</h4>
+            <p style="font-size: 13px; color: var(--subtext); margin-bottom: 20px;">Generate a raw, printable PDF dossier of your biometrics for OBGYN or endocrinologist consultations. Rendered locally.</p>
+            <button class="btn-main" onclick="generateClinicalReport()">📄 Compile Medical Dossier</button>
         </div>
+        
         <div class="card">
-            <h4 style="margin-bottom: 15px;">Data Portability (Cryptography)</h4>
-            <p style="font-size: 13px; color: var(--subtext); margin-bottom: 20px;">Règle uses zero-knowledge local architecture. Backup your JSON database externally to prevent data loss.</p>
+            <h4 style="margin-bottom: 15px;">Cryptography & Data Portability</h4>
+            <p style="font-size: 13px; color: var(--subtext); margin-bottom: 20px;">Règle utilizes zero-knowledge local indexed storage. Export your JSON payload externally to prevent catastrophic data loss.</p>
             <div style="display: flex; gap: 10px; flex-direction: column;">
                 <button class="btn" style="border-color: var(--accent); color: var(--accent);" onclick="exportJSON()">⬇️ Export Secure JSON</button>
                 <input type="file" id="importFile" style="display:none;" accept=".json" onchange="importJSON(event)">
-                <button class="btn" onclick="document.getElementById('importFile').click()">⬆️ Import Local JSON</button>
+                <button class="btn" onclick="document.getElementById('importFile').click()">⬆️ Import Secure JSON</button>
             </div>
         </div>
+        
         <div class="card">
-            <h4 style="margin-bottom: 15px;">System Reset</h4>
-            <button class="btn" style="color: #ff453a; border-color: rgba(255,69,58,0.3); background: rgba(255,69,58,0.05);" onclick="document.getElementById('erase-modal').classList.add('modal-show')">Initiate Database Purge</button>
+            <h4 style="margin-bottom: 15px;">Database Destruction</h4>
+            <button class="btn" style="color: #ff453a; border-color: rgba(255,69,58,0.3); background: rgba(255,69,58,0.05);" onclick="document.getElementById('erase-modal').classList.add('modal-show')">Initiate Secure Purge</button>
         </div>
     </div>
 </div>
@@ -259,20 +313,27 @@
     <button class="nav-item active" onclick="switchTab('tab-today', this)"><div class="nav-icon">⨀</div>Hub</button>
     <button class="nav-item" onclick="switchTab('tab-calendar', this)"><div class="nav-icon">🗓</div>Map</button>
     <button class="nav-item" onclick="switchTab('tab-analysis', this)"><div class="nav-icon">📊</div>Metrics</button>
-    <button class="nav-item" onclick="switchTab('tab-ai', this)"><div class="nav-icon">🧠</div>AI</button>
+    <button class="nav-item" onclick="switchTab('tab-vault', this)"><div class="nav-icon">🔐</div>Vault</button>
     <button class="nav-item" onclick="switchTab('tab-settings', this)"><div class="nav-icon">⚙️</div>Config</button>
 </nav>
 
-<!-- LOGGING DRAWER -->
+<!-- EXPANDED LOGGING DRAWER -->
 <div class="drawer" id="logDrawer">
     <div class="drawer-header">
         <button class="back-btn" onclick="closeLayer()">← Back</button>
-        <div style="font-weight: 700; font-size: 18px;">Input Data</div><div style="width: 70px;"></div>
+        <div style="font-weight: 700; font-size: 18px;">Biometric Input</div>
+        <div style="width: 70px; text-align:right;">
+            <button style="background:none; border:none; color:var(--accent); font-weight:700; font-size:15px; cursor:pointer;" onclick="saveLog()">Save</button>
+        </div>
     </div>
+    
     <div class="drawer-content">
-        <div style="padding: 20px;"><input type="date" id="logDate"></div>
+        <div style="padding: 20px;">
+            <input type="date" id="logDate">
+        </div>
+        
         <div class="log-group">
-            <div class="log-title">🩸 Bleeding Volume</div>
+            <div class="log-title"><span class="log-title-icon">🩸</span> Menstrual Volume</div>
             <div class="chip-grid" id="flowSelect">
                 <button class="chip" data-val="None"><span>🚫</span>None</button>
                 <button class="chip" data-val="Spotting"><span>🩸</span>Spot</button>
@@ -281,24 +342,14 @@
                 <button class="chip" data-val="Heavy"><span>🌊</span>Heavy</button>
             </div>
         </div>
+
         <div class="log-group">
-            <div class="log-title">🧠 Cognitive & Physical</div>
-            <div class="chip-grid" id="symptomSelect">
-                <button class="chip" data-val="Cramps"><span>⚡</span>Cramps</button>
-                <button class="chip" data-val="Fatigue"><span>🔋</span>Fatigue</button>
-                <button class="chip" data-val="BrainFog"><span>🌫️</span>Brain Fog</button>
-                <button class="chip" data-val="Anxiety"><span>🌪️</span>Anxiety</button>
-                <button class="chip" data-val="HighLibido"><span>🔥</span>Libido +</button>
-                <button class="chip" data-val="Migraine"><span>🔨</span>Migraine</button>
-            </div>
-        </div>
-        <div class="log-group">
-            <div class="log-title">🌡️ Advanced Biomarkers</div>
+            <div class="log-title"><span class="log-title-icon">🌡️</span> Clinical Biomarkers</div>
             <div style="padding: 0 20px;">
                 <label class="input-label" style="text-align: left;">Basal Body Temp (°C/°F)</label>
-                <input type="number" step="0.01" id="logBBT" placeholder="e.g. 97.8">
+                <input type="number" step="0.01" id="logBBT" placeholder="Taken immediately upon waking">
             </div>
-            <label class="input-label" style="margin-top: 10px;">Cervical Fluid</label>
+            <label class="input-label" style="margin-top: 15px;">Cervical Fluid Observation</label>
             <div class="chip-grid" id="mucusSelect">
                 <button class="chip" data-val="Dry"><span>🏜️</span>Dry</button>
                 <button class="chip" data-val="Sticky"><span>🍯</span>Sticky</button>
@@ -306,8 +357,46 @@
                 <button class="chip" data-val="EggWhite"><span>🥚</span>Egg White</button>
             </div>
         </div>
-        <div style="padding: 20px 20px 40px 20px;">
-            <button class="btn-main" onclick="saveLog()">Commit Log</button>
+
+        <div class="log-group">
+            <div class="log-title"><span class="log-title-icon">🧠</span> Cognitive & Physical State</div>
+            <div class="chip-grid" id="symptomSelect">
+                <button class="chip" data-val="Cramps"><span>⚡</span>Cramps</button>
+                <button class="chip" data-val="Fatigue"><span>🔋</span>Fatigue</button>
+                <button class="chip" data-val="Headache"><span>🔨</span>Headache</button>
+                <button class="chip" data-val="BrainFog"><span>🌫️</span>Brain Fog</button>
+                <button class="chip" data-val="Anxiety"><span>🌪️</span>Anxiety</button>
+                <button class="chip" data-val="Irritable"><span>🔥</span>Irritable</button>
+                <button class="chip" data-val="HighLibido"><span>🌶️</span>Libido +</button>
+                <button class="chip" data-val="Acne"><span>🔴</span>Acne</button>
+            </div>
+        </div>
+        
+        <div class="log-group">
+            <div class="log-title"><span class="log-title-icon">🫀</span> Digestion & Sleep</div>
+            <div class="chip-grid" id="digestionSelect">
+                <button class="chip" data-val="Bloating"><span>🎈</span>Bloating</button>
+                <button class="chip" data-val="Nausea"><span>🤢</span>Nausea</button>
+                <button class="chip" data-val="Insomnia"><span>🦉</span>Insomnia</button>
+                <button class="chip" data-val="DeepSleep"><span>🛌</span>Deep Sleep</button>
+            </div>
+        </div>
+        
+        <div class="log-group">
+            <div class="log-title"><span class="log-title-icon">💊</span> Interventions</div>
+            <div class="chip-grid" id="medSelect">
+                <button class="chip" data-val="Painkiller"><span>💊</span>Painkiller</button>
+                <button class="chip" data-val="Magnesium"><span>🧂</span>Magnesium</button>
+                <button class="chip" data-val="Iron"><span>🩸</span>Iron</button>
+                <button class="chip" data-val="HeatingPad"><span>♨️</span>Heat Pad</button>
+            </div>
+        </div>
+
+        <div class="log-group" style="border-bottom: none; padding-bottom: 40px;">
+            <div class="log-title"><span class="log-title-icon">📝</span> Clinical & Partner Notes</div>
+            <div style="padding: 0 20px;">
+                <textarea id="logNotes" placeholder="Log subjective experiences, partner observations, or environmental factors..."></textarea>
+            </div>
         </div>
     </div>
 </div>
@@ -320,65 +409,82 @@
     function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
     function executeWipe() { localStorage.clear(); location.reload(); }
 
+    const DB_KEY = 'regle_db_v11_apex';
+    let appState = { calcCycle: 28, calcPeriod: 5, goal: 'health', logs: [] };
+    let currentCalDate = new Date(); 
+    let selectedData = { flow: 'None', bbt: null, mucus: 'None', symptoms: [], meds: [], notes: '' };
+    let cycleHistoryData = []; 
+    let isPartnerMode = false;
+
     document.addEventListener('DOMContentLoaded', () => {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('ob-date').max = today; document.getElementById('logDate').max = today;
         const logo = document.getElementById('logo-layer'); const shield = document.getElementById('boot-screen'); const ob = document.getElementById('onboarding');
+        
         setTimeout(() => { logo.classList.add('boot-active'); }, 50);
         setTimeout(() => {
             logo.classList.add('header-mode'); shield.style.opacity = '0';
             setTimeout(() => {
                 shield.style.display = 'none';
-                const stored = localStorage.getItem('regle_db_v10');
-                if (stored) { appState = JSON.parse(stored); document.getElementById('app-container').style.opacity = '1'; engineCalculate(); refreshUI(); } 
-                else { ob.style.display = 'flex'; setTimeout(()=> ob.style.opacity = '1', 50); document.getElementById('ob-date').value = today; }
+                const stored = localStorage.getItem(DB_KEY);
+                if (stored) { 
+                    appState = JSON.parse(stored); 
+                    // Migration check for older DBs
+                    appState.logs.forEach(l => {
+                        if(!l.symptoms) l.symptoms = [];
+                        if(!l.meds) l.meds = [];
+                        if(!l.notes) l.notes = '';
+                    });
+                    document.getElementById('app-container').style.opacity = '1'; 
+                    engineCalculate(); 
+                    refreshUI(); 
+                } else { 
+                    ob.style.display = 'flex'; 
+                    setTimeout(()=> ob.style.opacity = '1', 50); 
+                    document.getElementById('ob-date').value = today; 
+                }
             }, 600); 
         }, 1400); 
         setupInteractions();
     });
 
-    /* HOLISTIC CYCLE SYNCING PROTOCOLS (Personal & Partner Mode Matrices) */
+    /* HOLISTIC CYCLE SYNCING PROTOCOLS */
     const phaseDatabase = {
         menstrual: {
             days: [1, 2, 3, 4, 5], name: "Menstrual Phase", subtitle: "Endometrial Shedding",
-            personal: `<details open><summary>Physiology</summary><div class="details-content">Hormones are at baseline. The uterus actively contracts. Prostaglandin levels induce inflammation.</div></details>
-                      <details><summary>Holistic Sync Protocol</summary><div class="details-content"><b>Nutrition:</b> Heavy focus on Iron (spinach, red meat) to replace blood loss. Anti-inflammatory Omega-3s.<br><br><b>Movement:</b> Rest is required. Limit to light stretching or yoga. Zero high-intensity output.</div></details>`,
-            partner: `<details open><summary>Biological Status</summary><div class="details-content">Hormones are at their absolute lowest. Uterine contractions (cramps) and systemic fatigue are highly probable.</div></details>
-                      <details><summary>Actionable Protocol</summary><div class="details-content"><b>Support:</b> Prioritize physical comfort. Offer heat pads and handle heavy physical tasks. <br><br><b>Nutrition:</b> Prepare iron-rich meals (e.g., red meat, dark leafy greens). Avoid suggesting high-energy social events.</div></details>`
+            personal: `<details open><summary>Physiology</summary><div class="details-content">Hormones are at baseline. The uterus actively contracts. Prostaglandin levels induce systemic inflammation.</div></details>
+                      <details><summary>Sync Protocol</summary><div class="details-content"><b>Nutrition:</b> Heavy focus on Iron (spinach, red meat) to replace blood loss. Anti-inflammatory Omega-3s.<br><br><b>Movement:</b> Rest is mandatory. Limit to light stretching. Zero high-intensity output.</div></details>`,
+            partner: `<details open><summary>Biological Status</summary><div class="details-content">Hormones are at absolute minimums. Uterine contractions and systemic fatigue are highly probable.</div></details>
+                      <details><summary>Actionable Protocol</summary><div class="details-content"><b>Support:</b> Prioritize physical comfort. Offer heat pads and handle heavy physical tasks. <br><br><b>Nutrition:</b> Prepare iron-rich meals. Avoid suggesting high-energy social events.</div></details>`
         },
         follicular: {
             days: [6, 7, 8, 9, 10, 11, 12, 13], name: "Follicular Phase", subtitle: "Estrogen Ascent",
-            personal: `<details open><summary>Physiology</summary><div class="details-content">Estrogen rises rapidly, clearing brain fog, boosting metabolism, and enhancing neuroplasticity.</div></details>
-                      <details><summary>Holistic Sync Protocol</summary><div class="details-content"><b>Nutrition:</b> Complex carbs and cruciferous vegetables (broccoli, kale) to help metabolize excess estrogen.<br><br><b>Movement:</b> Peak energy window. Optimize for HIIT, heavy strength training, and endurance.</div></details>`,
-            partner: `<details open><summary>Biological Status</summary><div class="details-content">Estrogen is rising rapidly. This is associated with increased energy, clearer cognition, and a lifting mood.</div></details>
-                      <details><summary>Actionable Protocol</summary><div class="details-content"><b>Support:</b> Excellent time for collaborative problem-solving or initiating complex projects together.<br><br><b>Activity:</b> Suggest highly active dates or social outings. Physical stamina is returning to peak levels.</div></details>`
+            personal: `<details open><summary>Physiology</summary><div class="details-content">Estrogen rises rapidly, clearing brain fog, boosting baseline metabolism, and enhancing neuroplasticity.</div></details>
+                      <details><summary>Sync Protocol</summary><div class="details-content"><b>Nutrition:</b> Complex carbs and cruciferous vegetables (broccoli, kale) to metabolize excess estrogen.<br><br><b>Movement:</b> Peak energy window. Optimize for HIIT, heavy strength training, and endurance.</div></details>`,
+            partner: `<details open><summary>Biological Status</summary><div class="details-content">Estrogen is rising rapidly. This is chemically associated with increased energy, clearer cognition, and a lifting mood.</div></details>
+                      <details><summary>Actionable Protocol</summary><div class="details-content"><b>Support:</b> Excellent time for collaborative problem-solving or initiating complex projects.<br><br><b>Activity:</b> Suggest highly active dates or social outings. Physical stamina is returning to peak levels.</div></details>`
         },
         ovulation: {
             days: [14, 15, 16], name: "Ovulation Window", subtitle: "Biological Peak",
-            personal: `<details open><summary>Physiology</summary><div class="details-content">LH surge triggers egg release. Peak testosterone and estrogen maximize physical drive and social confidence.</div></details>
-                      <details><summary>Holistic Sync Protocol</summary><div class="details-content"><b>Nutrition:</b> B-complex vitamins, folic acid, and light proteins. Digestion may slow slightly.<br><br><b>Movement:</b> Maximum capacity. Execute the heaviest lifts and highest cardiovascular demands.</div></details>`,
+            personal: `<details open><summary>Physiology</summary><div class="details-content">LH surge triggers egg release. Peak testosterone and estrogen maximize physical drive and social confidence. BBT shifts upward.</div></details>
+                      <details><summary>Sync Protocol</summary><div class="details-content"><b>Nutrition:</b> B-complex vitamins, folic acid, and light proteins. Digestion may slow slightly.<br><br><b>Movement:</b> Maximum capacity. Execute the heaviest lifts and highest cardiovascular demands.</div></details>`,
             partner: `<details open><summary>Biological Status</summary><div class="details-content">Peak fertility. A massive spike in estrogen and testosterone typically yields peak social confidence and maximum libido.</div></details>
                       <details><summary>Actionable Protocol</summary><div class="details-content"><b>Support:</b> Expect high energy and desire for interpersonal connection. <br><br><b>Note:</b> If avoiding pregnancy, strict adherence to secondary contraception is mathematically imperative during this 48hr window.</div></details>`
         },
         luteal: {
             days: [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], name: "Luteal Phase", subtitle: "Progesterone Dominance",
-            personal: `<details open><summary>Physiology</summary><div class="details-content">Progesterone peaks, increasing core body temperature and metabolic rate. Sudden hormonal drops trigger PMS.</div></details>
-                      <details><summary>Holistic Sync Protocol</summary><div class="details-content"><b>Nutrition:</b> Metabolism increases by 100-300 kcal/day natively. Satisfy cravings with complex carbohydrates.<br><br><b>Movement:</b> Transition to low-impact steady state (LISS), pilates, and walking to manage systemic fatigue.</div></details>`,
+            personal: `<details open><summary>Physiology</summary><div class="details-content">Progesterone peaks, increasing core body temperature. Sudden hormonal drops near day 24 trigger PMS symptoms.</div></details>
+                      <details><summary>Sync Protocol</summary><div class="details-content"><b>Nutrition:</b> Metabolism increases by 100-300 kcal/day natively. Satisfy cravings with complex carbohydrates.<br><br><b>Movement:</b> Transition to low-impact steady state (LISS), pilates, and walking to manage systemic fatigue.</div></details>`,
             partner: `<details open><summary>Biological Status</summary><div class="details-content">Progesterone is dominant. As it drops late in the phase, neurochemicals fluctuate, causing irritability, anxiety, and fatigue (PMS).</div></details>
-                      <details><summary>Actionable Protocol</summary><div class="details-content"><b>Support:</b> Extreme patience required. Emotional sensitivity is chemically induced, not purely psychological. <br><br><b>Nutrition:</b> Provide complex carbs. Avoid critical relationship discussions during days 24-28.</div></details>`
+                      <details><summary>Actionable Protocol</summary><div class="details-content"><b>Support:</b> Extreme patience required. Emotional sensitivity is chemically induced, not psychological. <br><br><b>Nutrition:</b> Provide complex carbs. Avoid critical relationship discussions during days 24-28.</div></details>`
         }
     };
-
-    let appState = { calcCycle: 28, calcPeriod: 5, logs: [] };
-    let currentCalDate = new Date(); let selectedData = { flow: 'None', bbt: null, mucus: 'None', symptoms: [] };
-    let cycleHistoryData = []; 
-    let isPartnerMode = false;
 
     function togglePartnerMode() {
         isPartnerMode = !isPartnerMode; haptic(2);
         const body = document.body; const btn = document.getElementById('partner-toggle');
-        if(isPartnerMode) { body.classList.add('partner-active'); btn.innerText = "👥 Partner Mode"; document.getElementById('btn-log-main').style.display='none'; document.getElementById('btn-log-quick').style.display='none';}
-        else { body.classList.remove('partner-active'); btn.innerText = "👤 Personal Mode"; document.getElementById('btn-log-main').style.display='block'; document.getElementById('btn-log-quick').style.display='flex';}
+        if(isPartnerMode) { body.classList.add('partner-active'); btn.innerText = "👥 Partner Mode"; }
+        else { body.classList.remove('partner-active'); btn.innerText = "👤 Personal Mode"; }
         refreshUI();
     }
 
@@ -386,37 +492,75 @@
         const d = document.getElementById('ob-date').value;
         appState.calcCycle = parseInt(document.getElementById('ob-cycle').value) || 28;
         appState.calcPeriod = parseInt(document.getElementById('ob-period').value) || 5;
-        if(d) appState.logs.push({date: d, timestamp: new Date(d).getTime(), flow: 'Medium', symptoms:[]});
-        localStorage.setItem('regle_db_v10', JSON.stringify(appState));
+        appState.goal = document.getElementById('ob-goal').value;
+        
+        if(d) appState.logs.push({date: d, timestamp: new Date(d).getTime(), flow: 'Medium', symptoms:[], meds:[], notes:''});
+        localStorage.setItem(DB_KEY, JSON.stringify(appState));
+        
         document.getElementById('onboarding').style.opacity = '0';
         setTimeout(() => { document.getElementById('onboarding').style.display = 'none'; document.getElementById('app-container').style.opacity = '1'; engineCalculate(); refreshUI(); }, 400);
     }
 
-    /* JSON EXPORT/IMPORT ZERO-KNOWLEDGE CRYPTOGRAPHY */
+    /* JSON EXPORT/IMPORT */
     function exportJSON() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState));
-        const a = document.createElement('a'); a.href = dataStr; a.download = "regle_archive_encrypted.json"; a.click(); showToast("JSON Exported Successfully");
+        const a = document.createElement('a'); a.href = dataStr; a.download = `regle_dossier_${new Date().toISOString().split('T')[0]}.json`; a.click(); showToast("Encrypted Data Exported");
     }
     function importJSON(event) {
         const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
-        reader.onload = function(e) { try { appState = JSON.parse(e.target.result); localStorage.setItem('regle_db_v10', JSON.stringify(appState)); location.reload(); } catch(err) { showToast("File Corrupted"); } };
+        reader.onload = function(e) { try { appState = JSON.parse(e.target.result); localStorage.setItem(DB_KEY, JSON.stringify(appState)); location.reload(); } catch(err) { showToast("File Corrupted"); } };
         reader.readAsText(file);
     }
 
-    function switchTab(tabId, btn) { haptic(1); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active')); document.getElementById(tabId).classList.add('active'); refreshUI(); }
-    function openLayer(layerId) { if(isPartnerMode) return; haptic(1); const todayStr = new Date().toISOString().split('T')[0]; document.getElementById('logDate').value = todayStr; loadLog(todayStr); document.getElementById('logDate').onchange = (e) => loadLog(e.target.value); document.getElementById(layerId).classList.add('open'); }
+    function switchTab(tabId, btn) { 
+        haptic(1); 
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); btn.classList.add('active'); 
+        document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active')); document.getElementById(tabId).classList.add('active'); 
+        if(tabId === 'tab-vault') renderVault();
+        refreshUI(); 
+    }
+    
+    function openLayer(layerId) {
+        haptic(1); const todayStr = new Date().toISOString().split('T')[0]; 
+        document.getElementById('logDate').value = todayStr; loadLog(todayStr); 
+        document.getElementById('logDate').onchange = (e) => loadLog(e.target.value); 
+        document.getElementById(layerId).classList.add('open'); 
+    }
+    
     function closeLayer() { document.getElementById('logDrawer').classList.remove('open'); engineCalculate(); refreshUI(); }
 
+    /* HARD CYCLE RESET ENGINE */
+    function startNewPeriod() {
+        haptic(2);
+        const todayStr = new Date().toISOString().split('T')[0];
+        appState.logs = appState.logs.filter(l => l.date !== todayStr);
+        appState.logs.push({ date: todayStr, timestamp: new Date(todayStr).getTime(), flow: 'Medium', bbt: null, mucus: 'None', symptoms: [], meds: [], notes: '' });
+        appState.logs.sort((a, b) => b.timestamp - a.timestamp);
+        localStorage.setItem(DB_KEY, JSON.stringify(appState));
+        
+        showToast('New Cycle Archiving Active');
+        engineCalculate();
+        refreshUI();
+    }
+
     function setupInteractions() {
-        ['flowSelect', 'mucusSelect', 'symptomSelect'].forEach(id => {
-            document.getElementById(id).addEventListener('click', (e) => {
+        const selectGroups = ['flowSelect', 'mucusSelect', 'symptomSelect', 'digestionSelect', 'medSelect'];
+        selectGroups.forEach(id => {
+            const el = document.getElementById(id);
+            if(!el) return;
+            el.addEventListener('click', (e) => {
                 const btn = e.target.closest('.chip'); if (!btn) return; haptic(1);
                 const val = btn.dataset.val;
-                if(id === 'symptomSelect') {
+                
+                if(id === 'symptomSelect' || id === 'digestionSelect') {
                     btn.classList.toggle('active');
                     if(btn.classList.contains('active')) selectedData.symptoms.push(val);
                     else selectedData.symptoms = selectedData.symptoms.filter(s => s !== val);
+                } else if(id === 'medSelect') {
+                    btn.classList.toggle('active');
+                    if(btn.classList.contains('active')) selectedData.meds.push(val);
+                    else selectedData.meds = selectedData.meds.filter(s => s !== val);
                 } else {
                     const type = id.replace('Select', ''); selectedData[type] = val; 
                     document.querySelectorAll(`#${id} .chip`).forEach(c => c.classList.toggle('active', c.dataset.val === val));
@@ -426,47 +570,87 @@
     }
 
     function loadLog(dateStr) {
-        selectedData = { flow: 'None', bbt: null, mucus: 'None', symptoms: [] };
-        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); document.getElementById('logBBT').value = '';
+        selectedData = { flow: 'None', bbt: null, mucus: 'None', symptoms: [], meds: [], notes: '' };
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); 
+        document.getElementById('logBBT').value = '';
+        document.getElementById('logNotes').value = '';
+        
         const existing = appState.logs.find(l => l.date === dateStr);
         if (existing) {
-            selectedData = { flow: existing.flow || 'None', bbt: existing.bbt || null, mucus: existing.mucus || 'None', symptoms: existing.symptoms || [] };
+            selectedData = { 
+                flow: existing.flow || 'None', 
+                bbt: existing.bbt || null, 
+                mucus: existing.mucus || 'None', 
+                symptoms: existing.symptoms || [],
+                meds: existing.meds || [],
+                notes: existing.notes || ''
+            };
             if(existing.flow) document.querySelector(`#flowSelect .chip[data-val="${existing.flow}"]`)?.classList.add('active');
             if(existing.mucus) document.querySelector(`#mucusSelect .chip[data-val="${existing.mucus}"]`)?.classList.add('active');
             if(existing.bbt) document.getElementById('logBBT').value = existing.bbt;
-            existing.symptoms?.forEach(s => document.querySelector(`#symptomSelect .chip[data-val="${s}"]`)?.classList.add('active'));
+            if(existing.notes) document.getElementById('logNotes').value = existing.notes;
+            
+            existing.symptoms?.forEach(s => {
+                let node = document.querySelector(`#symptomSelect .chip[data-val="${s}"]`) || document.querySelector(`#digestionSelect .chip[data-val="${s}"]`);
+                if(node) node.classList.add('active');
+            });
+            existing.meds?.forEach(m => document.querySelector(`#medSelect .chip[data-val="${m}"]`)?.classList.add('active'));
         }
     }
 
     function saveLog() {
         const d = document.getElementById('logDate').value; if (!d || d > new Date().toISOString().split('T')[0]) { showToast('Temporal limit reached.'); return; }
+        
         selectedData.bbt = document.getElementById('logBBT').value ? parseFloat(document.getElementById('logBBT').value) : null;
+        selectedData.notes = document.getElementById('logNotes').value.trim();
+        
         appState.logs = appState.logs.filter(l => l.date !== d);
-        if (selectedData.flow !== 'None' || selectedData.bbt || selectedData.mucus !== 'None' || selectedData.symptoms.length > 0) {
-            appState.logs.push({ date: d, timestamp: new Date(d).getTime(), ...selectedData }); appState.logs.sort((a, b) => b.timestamp - a.timestamp);
+        
+        if (selectedData.flow !== 'None' || selectedData.bbt || selectedData.mucus !== 'None' || selectedData.symptoms.length > 0 || selectedData.meds.length > 0 || selectedData.notes !== '') {
+            appState.logs.push({ date: d, timestamp: new Date(d).getTime(), ...selectedData }); 
+            appState.logs.sort((a, b) => b.timestamp - a.timestamp);
         }
-        localStorage.setItem('regle_db_v10', JSON.stringify(appState)); showToast('Data Synchronized'); closeLayer();
+        localStorage.setItem(DB_KEY, JSON.stringify(appState)); showToast('Biometrics Committed'); closeLayer();
     }
 
-    /* BAYESIAN DYNAMIC ANCHORING ENGINE */
+    /* MATH & VARIANCE ENGINE */
     function engineCalculate() {
         const flows = [...appState.logs].filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => a.timestamp - b.timestamp);
-        cycleHistoryData = []; if (flows.length === 0) return;
+        cycleHistoryData = []; 
+        if (flows.length === 0) return;
+        
         let currentCycle = { start: flows[0], periodLen: 1, cycleLen: null, ovulated: false };
         
         for (let i = 1; i < flows.length; i++) {
             const diffDays = (flows[i].timestamp - flows[i-1].timestamp) / 86400000;
+            // The engine naturally registers a new cycle when a flow is logged after a 5+ day gap
             if (diffDays > 5) { 
-                currentCycle.cycleLen = (flows[i].timestamp - currentCycle.start.timestamp) / 86400000; cycleHistoryData.push(currentCycle);
+                currentCycle.cycleLen = (flows[i].timestamp - currentCycle.start.timestamp) / 86400000; 
+                cycleHistoryData.push(currentCycle);
                 currentCycle = { start: flows[i], periodLen: 1, cycleLen: null, ovulated: false };
-            } else { currentCycle.periodLen = Math.max(currentCycle.periodLen, Math.floor((flows[i].timestamp - currentCycle.start.timestamp)/86400000) + 1); }
+            } else { 
+                currentCycle.periodLen = Math.max(currentCycle.periodLen, Math.floor((flows[i].timestamp - currentCycle.start.timestamp)/86400000) + 1); 
+            }
         }
         cycleHistoryData.push(currentCycle); 
-        let totalCycle = 0, validCycles = 0; cycleHistoryData.forEach(c => { if (c.cycleLen >= 15) { totalCycle += c.cycleLen; validCycles++; }});
-        if (validCycles >= 1) appState.calcCycle = Math.round(totalCycle / validCycles);
-
-        const recentLogs = [...appState.logs].filter(l => l.timestamp >= currentCycle.start.timestamp);
-        for(let l of recentLogs) { if (l.mucus === 'EggWhite' || (l.bbt && l.bbt > 98.0)) { currentCycle.ovulated = true; appState.calcCycle = Math.floor((l.timestamp - currentCycle.start.timestamp)/86400000) + 15; break; } }
+        
+        let validLens = [];
+        cycleHistoryData.forEach(c => { if (c.cycleLen && c.cycleLen >= 15) validLens.push(c.cycleLen); });
+        
+        if (validLens.length > 0) {
+            let sum = validLens.reduce((a, b) => a + b, 0);
+            let mean = sum / validLens.length;
+            appState.calcCycle = Math.round(mean);
+            
+            // Standard Deviation Math
+            let varianceSq = validLens.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / validLens.length;
+            let stdDev = Math.sqrt(varianceSq);
+            document.getElementById('stat-avg-cycle').innerText = `${appState.calcCycle}d`;
+            document.getElementById('stat-variance').innerText = `±${stdDev.toFixed(1)}d`;
+        } else {
+            document.getElementById('stat-avg-cycle').innerText = `${appState.calcCycle}d`;
+            document.getElementById('stat-variance').innerText = `--`;
+        }
     }
 
     function refreshUI() {
@@ -488,11 +672,13 @@
             const contentHTML = isPartnerMode ? pData.partner : pData.personal;
             document.getElementById('dynamic-phase-content').innerHTML = `<div class="card card-highlight"><h3 style="color:var(--text); margin-bottom:5px;">${pData.name}</h3><p style="color:var(--accent); font-size:13px; font-weight:800; text-transform:uppercase; margin-bottom:20px; letter-spacing:1px;">${pData.subtitle}</p>${contentHTML}</div>`;
         }
-        renderCalendar(); renderInsights(dayOfCycle); renderHeatmap();
+        renderCalendar(); 
+        renderWaveInsights(dayOfCycle); 
+        renderBBTChart();
+        renderHeatmap();
     }
 
-    function renderInsights(day) {
-        document.getElementById('engine-status').innerText = cycleHistoryData.length > 1 ? "Bayesian Anchor Active" : "Baseline Running";
+    function renderWaveInsights(day) {
         const w = document.getElementById('hormone-wave-container').clientWidth || 300; const h = 180;
         let estPath = `M 0 ${h}`, progPath = `M 0 ${h}`;
         for(let i=0; i<=w; i+=5) {
@@ -505,6 +691,55 @@
         document.getElementById('hormone-wave-container').innerHTML = `<svg class="svg-chart" viewBox="0 0 ${w} ${h}"><path class="wave-path" stroke="var(--estrogen)" d="${estPath}"></path><path class="wave-path" stroke="var(--progesterone)" d="${progPath}"></path><line x1="${ind}" y1="0" x2="${ind}" y2="${h}" stroke="#fff" stroke-dasharray="2 2"></line><text x="${ind}" y="15" fill="#fff" font-size="10">DAY ${day}</text></svg>`;
     }
 
+    /* BBT CHART RENDERING ENGINE */
+    function renderBBTChart() {
+        const w = document.getElementById('bbt-chart-container').clientWidth || 300; 
+        const h = 160;
+        const pad = 20;
+        
+        // Find current cycle logs
+        if(cycleHistoryData.length === 0) return;
+        const currentCycleStart = cycleHistoryData[cycleHistoryData.length - 1].start.timestamp;
+        
+        const cycleLogs = appState.logs
+            .filter(l => l.timestamp >= currentCycleStart && l.bbt != null)
+            .sort((a,b) => a.timestamp - b.timestamp);
+            
+        if(cycleLogs.length < 2) {
+            document.getElementById('bbt-chart-container').innerHTML = `<svg class="svg-chart" viewBox="0 0 ${w} ${h}"><text x="${w/2}" y="${h/2}" fill="var(--subtext)" font-size="12" text-anchor="middle">Insufficient BBT Data for Current Cycle</text></svg>`;
+            return;
+        }
+
+        let minTemp = Math.min(...cycleLogs.map(l => l.bbt)) - 0.2;
+        let maxTemp = Math.max(...cycleLogs.map(l => l.bbt)) + 0.2;
+        
+        let pathD = "";
+        let pointsHTML = "";
+        
+        cycleLogs.forEach((l, index) => {
+            const dayOfCycle = Math.floor((l.timestamp - currentCycleStart)/86400000) + 1;
+            const x = pad + ((dayOfCycle / appState.calcCycle) * (w - pad*2));
+            // clamp x to width
+            const boundedX = Math.min(x, w - pad);
+            const y = h - pad - (((l.bbt - minTemp) / (maxTemp - minTemp)) * (h - pad*2));
+            
+            if(index === 0) pathD += `M ${boundedX} ${y} `;
+            else pathD += `L ${boundedX} ${y} `;
+            
+            pointsHTML += `<circle class="bbt-point" cx="${boundedX}" cy="${y}" r="4"></circle>`;
+            // Add temp text for high/low points loosely
+            if(index === 0 || index === cycleLogs.length -1) {
+                pointsHTML += `<text x="${boundedX}" y="${y - 10}" fill="var(--subtext)" font-size="9" text-anchor="middle">${l.bbt}</text>`;
+            }
+        });
+
+        document.getElementById('bbt-chart-container').innerHTML = `<svg class="svg-chart" viewBox="0 0 ${w} ${h}">
+            <line x1="${pad}" y1="${h/2}" x2="${w-pad}" y2="${h/2}" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4 4"></line>
+            <path class="bbt-path" d="${pathD}"></path>
+            ${pointsHTML}
+        </svg>`;
+    }
+
     /* SVG SYMPTOM HEATMAP GENERATOR */
     function renderHeatmap() {
         const w = document.getElementById('heatmap-container').clientWidth || 300; const h = 150;
@@ -515,17 +750,68 @@
         const keys = Object.keys(sympCounts);
         if(keys.length === 0) { svg += `<text x="${w/2}" y="${h/2}" fill="var(--subtext)" font-size="12" text-anchor="middle">Insufficient Symptom Data</text></svg>`; } 
         else {
-            const max = Math.max(...Object.values(sympCounts)); const barW = (w / keys.length) - 10;
-            keys.forEach((k, i) => {
+            // Take top 6 symptoms to fit nicely
+            const topKeys = keys.sort((a,b) => sympCounts[b] - sympCounts[a]).slice(0, 6);
+            const max = Math.max(...topKeys.map(k => sympCounts[k])); 
+            const barW = (w / topKeys.length) - 10;
+            
+            topKeys.forEach((k, i) => {
                 const barH = (sympCounts[k] / max) * (h - 30);
                 svg += `<rect class="heatmap-rect" x="${i*(barW+10) + 5}" y="${h - 20 - barH}" width="${barW}" height="${barH}" fill="var(--accent)"></rect>`;
-                svg += `<text x="${i*(barW+10) + 5 + barW/2}" y="${h - 5}" fill="var(--text)" font-size="10" text-anchor="middle">${k.substring(0,4)}</text>`;
+                svg += `<text x="${i*(barW+10) + 5 + barW/2}" y="${h - 5}" fill="var(--text)" font-size="10" text-anchor="middle">${k.substring(0,6)}</text>`;
             });
             svg += `</svg>`;
         }
         document.getElementById('heatmap-container').innerHTML = svg;
     }
 
+    /* VAULT RENDERING */
+    function renderVault() {
+        const container = document.getElementById('vault-list');
+        if(appState.logs.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:var(--subtext); padding:40px;">No records established.</div>`;
+            return;
+        }
+        
+        let html = "";
+        const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        
+        // Sort descending
+        const sortedLogs = [...appState.logs].sort((a,b) => b.timestamp - a.timestamp);
+        
+        sortedLogs.forEach(log => {
+            const dateObj = new Date(log.date);
+            const d = dateObj.getDate();
+            const m = months[dateObj.getMonth()];
+            
+            let tagHTML = "";
+            if(log.bbt) tagHTML += `<span class="timeline-tag">🌡️ ${log.bbt}</span>`;
+            if(log.mucus && log.mucus !== 'None') tagHTML += `<span class="timeline-tag">💧 ${log.mucus}</span>`;
+            log.symptoms?.forEach(s => tagHTML += `<span class="timeline-tag">${s}</span>`);
+            log.meds?.forEach(med => tagHTML += `<span class="timeline-tag" style="border: 1px solid var(--accent); color: var(--accent); background: none;">💊 ${med}</span>`);
+            
+            let flowText = log.flow !== 'None' ? `Flow: ${log.flow}` : 'Observation Log';
+            
+            let noteHTML = log.notes ? `<div class="timeline-note">${log.notes}</div>` : '';
+
+            html += `
+            <div class="timeline-item">
+                <div class="timeline-date">
+                    <div class="timeline-day">${d}</div>
+                    <div class="timeline-month">${m}</div>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-flow">${flowText}</div>
+                    <div class="timeline-tags">${tagHTML}</div>
+                    ${noteHTML}
+                </div>
+            </div>`;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    /* CALENDAR RENDERING */
     function changeMonth(delta) { currentCalDate.setMonth(currentCalDate.getMonth() + delta); renderCalendar(); }
     function renderCalendar() {
         const y = currentCalDate.getFullYear(); const m = currentCalDate.getMonth();
@@ -545,50 +831,21 @@
         for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
             const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
             let cls = 'day current-month'; if (dStr === todayStr) cls += ' today';
-            if (appState.logs.find(l => l.date === dStr && (l.flow !== 'None' || l.bbt || l.mucus !== 'None' || (l.symptoms && l.symptoms.length>0)))) cls += ' logged';
+            
+            // Check if day has ANY log data
+            let hasLog = appState.logs.find(l => l.date === dStr && (l.flow !== 'None' || l.bbt || l.mucus !== 'None' || (l.symptoms && l.symptoms.length>0) || (l.meds && l.meds.length>0) || l.notes));
+            if (hasLog) cls += ' logged';
             if (predictedSet.has(dStr) && dStr > todayStr) cls += ' predicted'; 
+            
             cal.innerHTML += `<div class="${cls}" ${dStr <= todayStr ? `onclick="openLayer('logDrawer'); document.getElementById('logDate').value='${dStr}'; loadLog('${dStr}');"` : `style="opacity:0.6;"`}>${i}</div>`;
         }
-    }
-
-    /* LOCAL GENERATIVE AI (SLM HEURISTIC MODEL) */
-    function triggerAI(prompt) {
-        haptic(1);
-        const chat = document.getElementById('ai-chat-window');
-        chat.innerHTML += `<div class="user-bubble">${prompt}</div>`;
-        
-        setTimeout(() => {
-            let response = "";
-            const flows = appState.logs.filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => b.timestamp - a.timestamp);
-            let currentDay = flows.length > 0 ? Math.floor((new Date().setHours(0,0,0,0) - new Date(flows[0].date)) / 86400000) + 1 : 0;
-
-            if(prompt.includes("tired")) {
-                if(currentDay > 24) response = "Based on your local logs, you are in the late luteal phase (Day " + currentDay + "). Progesterone is dropping rapidly, which chemically induces systemic fatigue and disrupts sleep architecture. This is a normal biological response.";
-                else if(currentDay < 6) response = "You are currently menstruating. Blood loss lowers iron levels, and prostaglandin synthesis causes inflammation, both resulting in acute fatigue. Hydrate and prioritize rest.";
-                else response = "You are in a high-energy phase. If you are experiencing fatigue on Day " + currentDay + ", it is likely environmental (sleep deprivation, stress) rather than strictly hormonal.";
-            } else if (prompt.includes("Fertility") || prompt.includes("fertile")) {
-                let ov = appState.calcCycle - 14; 
-                response = "Based on your calculated " + appState.calcCycle + "-day cycle, your ovulation mathematically centers around Day " + ov + ". Your highly fertile window is Days " + (ov-3) + " through " + (ov+1) + ".";
-            } else if (prompt.includes("Stability")) {
-                if(cycleHistoryData.length < 2) response = "I need at least 2 complete cycles logged locally to analyze stability. Keep logging bleeding and BBT.";
-                else {
-                    let diffs = []; for(let i=1; i<cycleHistoryData.length; i++) { diffs.push(Math.abs(cycleHistoryData[i].cycleLen - cycleHistoryData[i-1].cycleLen)); }
-                    let avgDiff = diffs.reduce((a,b)=>a+b,0)/diffs.length;
-                    if(avgDiff < 3) response = "Your cycle is highly stable, with a variance of only " + avgDiff.toFixed(1) + " days between cycles. The Bayesian model has high confidence in future predictions.";
-                    else response = "Your cycle shows significant variance (" + avgDiff.toFixed(1) + " days). I recommend logging Basal Body Temperature (BBT) daily so I can anchor predictions to actual ovulation rather than mathematical averages.";
-                }
-            } else { response = "Processing query against local encrypted database... Unable to parse specific medical intent. Please refine your query."; }
-            
-            chat.innerHTML += `<div class="ai-bubble">${response}</div>`;
-            chat.scrollTop = chat.scrollHeight;
-        }, 600);
     }
 
     /* CLINICAL PDF EXPORT ENGINE */
     function generateClinicalReport() {
         haptic(2);
         const render = document.getElementById('print-render');
-        let html = `<div class="print-title">Clinical Menstrual Health Report</div>`;
+        let html = `<div class="print-title">Clinical Menstrual Health Dossier</div>`;
         html += `<p>Generated: ${new Date().toLocaleDateString()}</p>`;
         html += `<p>Calculated Cycle Average: ${appState.calcCycle} Days | Average Bleeding: ${appState.calcPeriod} Days</p><hr>`;
         
@@ -598,10 +855,19 @@
         });
         html += `</table><br>`;
 
-        html += `<h3>Recent Logs (Last 30 Days)</h3><table class="print-table"><tr><th>Date</th><th>Flow</th><th>BBT</th><th>Symptoms</th></tr>`;
-        const thirtyDaysAgo = new Date().getTime() - (30 * 86400000);
-        appState.logs.filter(l => l.timestamp >= thirtyDaysAgo).forEach(l => {
-            html += `<tr><td>${new Date(l.date).toLocaleDateString()}</td><td>${l.flow}</td><td>${l.bbt || 'N/A'}</td><td>${l.symptoms ? l.symptoms.join(', ') : 'None'}</td></tr>`;
+        html += `<h3>Recent Biometric Ledger (Last 60 Days)</h3><table class="print-table"><tr><th>Date</th><th>Flow</th><th>BBT</th><th>Symptoms & Notes</th></tr>`;
+        const sixtyDaysAgo = new Date().getTime() - (60 * 86400000);
+        
+        const sortedLogs = [...appState.logs].filter(l => l.timestamp >= sixtyDaysAgo).sort((a,b) => b.timestamp - a.timestamp);
+        
+        sortedLogs.forEach(l => {
+            let context = [];
+            if(l.symptoms && l.symptoms.length > 0) context.push(l.symptoms.join(', '));
+            if(l.meds && l.meds.length > 0) context.push("Meds: " + l.meds.join(', '));
+            if(l.notes) context.push(`Note: "${l.notes}"`);
+            
+            let contextStr = context.length > 0 ? context.join(' | ') : 'None';
+            html += `<tr><td>${new Date(l.date).toLocaleDateString()}</td><td>${l.flow}</td><td>${l.bbt || 'N/A'}</td><td>${contextStr}</td></tr>`;
         });
         html += `</table>`;
         render.innerHTML = html;
