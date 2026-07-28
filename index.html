@@ -1,518 +1,599 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <!-- FIX: Removed user-scalable=no and maximum-scale=1.0 to preserve native zoom accessibility. 
-       Auto-zoom is prevented via CSS (font-size: 16px on inputs). -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Cycle Tracker</title>
-
-  <!-- PWA ADDITIONS: Apple Touch Icons & App Shell Config -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="placeholder-icon.png">
-  <link rel="apple-touch-startup-image" href="placeholder-splash.png">
-  <meta name="theme-color" content="#000000">
-
-  <style>
-    /* FIX: @property definition allows CSS variables to be natively animated in WebKit */
-    @property --accent {
-      syntax: '<color>';
-      initial-value: #FF2D55;
-      inherits: true;
+    // Robust local timezone parser to fix native date-picker UTC shifts
+    function getTodayStr() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
-    :root {
-      --bg: #000000;
-      --surface: #1C1C1E;
-      --surface-hover: #2C2C2E;
-      --accent: #FF2D55;
-      --text: #FFFFFF;
-      /* FIX: Lightened subtext from #8E8E93 to #A1A1A6 to pass WCAG AA contrast against black */
-      --subtext: #A1A1A6; 
-      --border: #38383A;
+    // NEW: Safely parse "YYYY-MM-DD" into a Local Date object (fixes UTC timezone shift bug)
+    function parseLocalDate(dateStr) {
+        if (!dateStr) return new Date();
+        const [y, m, d] = dateStr.split('-');
+        return new Date(y, m - 1, d);
     }
 
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
+    // NEW: Safely convert a Date object back to "YYYY-MM-DD" (fixes toISOString prediction offset bug)
+    function formatLocalDate(dObj) {
+        const year = dObj.getFullYear();
+        const month = String(dObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dObj.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      /* FIX: 100dvh prevents UI clipping from Safari's dynamic bottom toolbar */
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+    function haptic(type = 1) { if (navigator.vibrate) { if (type === 1) navigator.vibrate(20); else navigator.vibrate([30, 20, 30]); } }
+    function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+    function executeWipe() { localStorage.clear(); location.reload(); }
 
-    header {
-      padding: env(safe-area-inset-top, 20px) 20px 15px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    const DB_KEY = 'regle_db_v12_elegant';
+    let appState = { calcCycle: 28, calcPeriod: 5, goal: 'health', logs: [] };
+    let currentCalDate = new Date(); 
+    let selectedData = { flow: 'None', bbt: null, mucus: 'None', symptoms: [], meds: [], notes: '' };
+    let cycleHistoryData = []; 
+    let isPartnerMode = false;
 
-    h1 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+        const todayStr = getTodayStr();
+        document.getElementById('ob-date').max = todayStr; 
+        document.getElementById('logDate').max = todayStr;
+        
+        const boot = document.getElementById('boot-screen'); 
+        const ob = document.getElementById('onboarding');
+        const container = document.getElementById('app-container');
 
-    main {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      padding-bottom: env(safe-area-inset-bottom, 20px);
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
+        // Simple elegant boot sequence
+        setTimeout(() => {
+            boot.style.opacity = '0';
+            setTimeout(() => {
+                boot.style.display = 'none';
+                const stored = localStorage.getItem(DB_KEY);
+                if (stored) { 
+                    appState = JSON.parse(stored); 
+                    // Migration safe-guards
+                    appState.logs.forEach(l => {
+                        if(!l.symptoms) l.symptoms = [];
+                        if(!l.meds) l.meds = [];
+                        if(!l.notes) l.notes = '';
+                    });
+                    container.style.opacity = '1'; 
+                    engineCalculate(); 
+                    refreshUI(); 
+                } else { 
+                    ob.style.display = 'flex'; 
+                    setTimeout(()=> ob.style.opacity = '1', 50); 
+                    document.getElementById('ob-date').value = todayStr; 
+                }
+            }, 600); 
+        }, 1200); 
+        
+        setupInteractions();
+    });
 
-    /* Accessibility Semantic Adjustments */
-    button {
-      background: none;
-      border: none;
-      color: inherit;
-      font: inherit;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    .btn-primary {
-      background-color: var(--accent);
-      color: #FFF;
-      padding: 14px;
-      border-radius: 12px;
-      font-weight: 600;
-      width: 100%;
-      text-align: center;
-      transition: --accent 0.5s ease, transform 0.1s ease;
-    }
-
-    .btn-primary:active {
-      transform: scale(0.97);
-    }
-
-    .section-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 12px;
-      color: var(--text);
-    }
-
-    /* Calendar Grid */
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 8px;
-    }
-
-    /* FIX: Changed calendar items from <div> to <button> for VoiceOver navigation */
-    .calendar-day {
-      aspect-ratio: 1;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: 500;
-      background-color: var(--surface);
-      color: var(--text);
-    }
-    
-    .calendar-day.flow {
-      background-color: var(--accent);
-      color: #FFF;
-    }
-
-    /* SVG Chart */
-    .chart-container {
-      background: var(--surface);
-      border-radius: 16px;
-      padding: 16px;
-      height: 200px;
-      display: flex;
-      align-items: flex-end;
-    }
-
-    svg {
-      width: 100%;
-      height: 100%;
-      overflow: visible;
-    }
-
-    /* Drawer/Layer */
-    .drawer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background-color: var(--surface);
-      border-top-left-radius: 24px;
-      border-top-right-radius: 24px;
-      padding: 24px;
-      padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-      z-index: 100;
-      box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-    }
-
-    .drawer.open {
-      transform: translateY(0);
-    }
-
-    .drawer-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: var(--subtext);
-    }
-
-    /* FIX: font-size 16px minimum prevents iOS Safari from automatically zooming in */
-    input, select, textarea {
-      width: 100%;
-      font-size: 16px; 
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 12px;
-      border-radius: 10px;
-      appearance: none;
-    }
-
-    /* Vault List */
-    .vault-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .vault-item {
-      background: var(--surface);
-      padding: 16px;
-      border-radius: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-  </style>
-</head>
-<body>
-
-  <header>
-    <h1>Cycle Tracker</h1>
-    <button id="addLogBtn" class="btn-primary" style="width: auto; padding: 8px 16px;" aria-label="Add new log">
-      + Log
-    </button>
-  </header>
-
-  <main>
-    <section>
-      <div class="section-title">Calendar</div>
-      <div id="calendar-container" class="calendar-grid"></div>
-    </section>
-
-    <section>
-      <div class="section-title">BBT Chart</div>
-      <div id="chart-container" class="chart-container" aria-label="Basal Body Temperature Chart" role="img"></div>
-    </section>
-
-    <section>
-      <div class="section-title">Log Vault</div>
-      <div id="vault-container" class="vault-list"></div>
-    </section>
-  </main>
-
-  <!-- Logging Drawer -->
-  <!-- FIX: aria-hidden updates logically for screen readers -->
-  <div id="layer" class="drawer" aria-hidden="true" role="dialog" aria-labelledby="drawer-title">
-    <div class="drawer-header">
-      <h2 id="drawer-title" style="margin: 0; font-size: 20px;">Daily Log</h2>
-      <button id="closeLayerBtn" aria-label="Close dialog" style="color: var(--subtext); font-size: 24px;">&times;</button>
-    </div>
-
-    <!-- FIX: Properly linked <label> attributes for all inputs -->
-    <div class="form-group">
-      <label for="logDate">Date</label>
-      <input type="date" id="logDate">
-    </div>
-
-    <div class="form-group">
-      <label for="flowSelect">Flow Level</label>
-      <select id="flowSelect">
-        <option value="None">None</option>
-        <option value="Light">Light</option>
-        <option value="Medium">Medium</option>
-        <option value="Heavy">Heavy</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label for="bbtInput">Basal Body Temp (°F)</label>
-      <input type="number" id="bbtInput" step="0.01" placeholder="e.g. 97.60">
-    </div>
-
-    <button id="saveBtn" class="btn-primary">Save Entry</button>
-  </div>
-
-  <script>
-    /* ==============================
-       STATE MANAGEMENT
-       ============================== */
-    const appState = {
-      logs: [
-        { date: '2023-10-01', flow: 'Medium', bbt: 97.5 },
-        { date: '2023-10-02', flow: 'Heavy', bbt: 97.4 },
-        { date: '2023-10-03', flow: 'Medium', bbt: null },
-        { date: '2023-10-06', flow: 'Light', bbt: 97.6 }, // Deliberate gap to test engine logic
-        { date: '2023-10-14', flow: 'None', bbt: 98.2 }
-      ]
+    /* ELEGANT & COMPREHENSIVE PHASE DATABASE */
+    const phaseDatabase = {
+        menstrual: {
+            days: [1, 2, 3, 4, 5], 
+            name: "Menstrual Phase", 
+            subtitle: "Time to Rest & Replenish",
+            personal: `
+                <div class="phase-list">
+                    <div class="phase-item">
+                        <div class="phase-item-title">🍲 Nutrition</div>
+                        <div class="phase-item-text">Focus on iron-rich foods (spinach, red meat, dark chocolate) and warm, comforting meals. Hydrate thoroughly.</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">🧘‍♀️ Movement</div>
+                        <div class="phase-item-text">Keep it very light. Gentle yoga, stretching, and walking. Avoid high-intensity workouts.</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">🧠 Focus</div>
+                        <div class="phase-item-text">Energy is low. Excellent time for rest, introspection, and wrapping up small admin tasks rather than starting big projects.</div>
+                    </div>
+                </div>`,
+            partner: `
+                <div class="phase-list">
+                    <div class="phase-item">
+                        <div class="phase-item-title">❤️ Physical Support</div>
+                        <div class="phase-item-text">Hormones are at baseline. Cramps and fatigue are likely. Offer a heating pad and handle heavy physical chores.</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">🍲 Food & Activity</div>
+                        <div class="phase-item-text">Prepare comforting, iron-rich meals. Opt for a quiet night in rather than high-energy social outings.</div>
+                    </div>
+                </div>`
+        },
+        follicular: {
+            days: [6, 7, 8, 9, 10, 11, 12, 13], 
+            name: "Follicular Phase", 
+            subtitle: "Rising Energy & Creativity",
+            personal: `
+                <div class="phase-list">
+                    <div class="phase-item">
+                        <div class="phase-item-title">🥗 Nutrition</div>
+                        <div class="phase-item-text">Fresh, vibrant foods. Lean proteins and cruciferous veggies (broccoli, kale) to help metabolize rising estrogen.</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">🏃‍♀️ Movement</div>
+                        <div class="phase-item-text">Energy is returning. Great time for cardio, running, dance, or trying a new workout class.</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">💡 Focus</div>
+                        <div class="phase-item-text">Brain fog clears. Peak time for brainstorming, problem-solving, and starting new complex projects.</div>
+                    </div>
+                </div>`,
+            partner: `
+                <div class="phase-list">
+                    <div class="phase-item">
+                        <div class="phase-item-title">⚡ Energy & Mood</div>
+                        <div class="phase-item-text">Estrogen is rising, bringing a lift in mood, clarity, and physical stamina.</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">🗓️ Action Plan</div>
+                        <div class="phase-item-text">Excellent window for collaborative projects, active dates (hiking, exploring), and being socially active together.</div>
+                    </div>
+                </div>`
+        },
+        ovulation: {
+            days: [14, 15, 16], 
+            name: "Ovulation Window", 
+            subtitle: "Biological Peak",
+            personal: `
+                <div class="phase-list">
+                    <div class="phase-item">
+                        <div class="phase-item-title">🥑 Nutrition</div>
+                        <div class="phase-item-text">Antioxidant-rich foods, fiber, and light proteins. Digestion might slow down slightly during this window.</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">🏋️‍♀️ Movement</div>
+                        <div class="phase-item-text">Maximum physical capacity. Perfect time for heavy lifting, HIIT, and pushing for new personal bests.</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">🗣️ Focus</div>
+                        <div class="phase-item-text">Peak communication and confidence. Ideal for public speaking, networking, and important social interactions.</div>
+                    </div>
+                </div>`,
+            partner: `
+                <div class="phase-list">
+                    <div class="phase-item">
+                        <div class="phase-item-title">🔥 Biological Status</div>
+                        <div class="phase-item-text">Peak fertility window. Spikes in hormones generally create peak social confidence and high libido.</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">⚠️ Note</div>
+                        <div class="phase-item-text">Expect high energy. If pregnancy is not the goal, strict adherence to secondary contraception is imperative right now.</div>
+                    </div>
+                </div>`
+        },
+        luteal: {
+            days: [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], 
+            name: "Luteal Phase", 
+            subtitle: "Winding Down",
+            personal: `
+                <div class="phase-list">
+                    <div class="phase-item">
+                        <div class="phase-item-title">🍠 Nutrition</div>
+                        <div class="phase-item-text">Metabolism increases slightly. Honor cravings with healthy complex carbs (sweet potatoes, oats) and magnesium.</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">🚶‍♀️ Movement</div>
+                        <div class="phase-item-text">Transition away from intense cardio. Focus on Pilates, walking, and low-impact steady state exercises.</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">🧘‍♀️ Focus</div>
+                        <div class="phase-item-text">Energy moves inward. Great time for deep solo work, organizing, and prioritizing self-care as PMS may begin.</div>
+                    </div>
+                </div>`,
+            partner: `
+                <div class="phase-list">
+                    <div class="phase-item">
+                        <div class="phase-item-title">📉 Biological Status</div>
+                        <div class="phase-item-text">Progesterone dominates, then drops. This chemical shift can cause fatigue, bloating, and mood sensitivity (PMS).</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-item-title">🛡️ Support Strategy</div>
+                        <div class="phase-item-text">Patience is key. Provide favorite snacks. Avoid bringing up heavy or critical relationship discussions during days 24-28.</div>
+                    </div>
+                </div>`
+        }
     };
 
-    /* ==============================
-       FIX: CRITICAL JS BUGS
-       ============================== */
-
-    // 1. UTC Date Shift Fix
-    // Safely parses "YYYY-MM-DD" into a local time Date object without off-by-one errors.
-    function parseLocal(dateStr) {
-      if (!dateStr) return new Date();
-      const [year, month, day] = dateStr.split('-');
-      return new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+    function togglePartnerMode() {
+        isPartnerMode = !isPartnerMode; haptic(2);
+        const body = document.body; const btn = document.getElementById('partner-toggle');
+        if(isPartnerMode) { body.classList.add('partner-active'); btn.innerText = "👥 Partner"; }
+        else { body.classList.remove('partner-active'); btn.innerText = "👤 Personal"; }
+        refreshUI();
     }
 
-    // 2. Engine Calculation Flaws
-    function engineCalculate() {
-      // FIX: Ascending chronological sort exclusively for calculation (separated from UI sort)
-      const sortedForMath = [...appState.logs].sort((a, b) => parseLocal(a.date) - parseLocal(b.date));
-      
-      let cycles = [];
-      let currentCycle = null;
-
-      sortedForMath.forEach((log) => {
-        if (log.flow && log.flow !== 'None') {
-          const logDate = parseLocal(log.date);
-          
-          if (!currentCycle) {
-            currentCycle = { start: logDate, logs: [log] };
-          } else {
-            // FIX: Actual day difference logic. Previously, missed days caused an arbitrary 
-            // 5-day cycle split. We now calculate true distance. (Assuming flows <= 7 days apart are same cycle).
-            const lastLogDate = parseLocal(currentCycle.logs[currentCycle.logs.length - 1].date);
-            const diffDays = (logDate - lastLogDate) / (1000 * 60 * 60 * 24);
-            
-            if (diffDays > 7) {
-              cycles.push(currentCycle);
-              currentCycle = { start: logDate, logs: [log] };
-            } else {
-              currentCycle.logs.push(log);
-            }
-          }
+    function finishOb() {
+        const d = document.getElementById('ob-date').value;
+        const todayStr = getTodayStr();
+        
+        if (d && d > todayStr) { 
+            showToast('Cannot select a future date.'); 
+            return; 
         }
-      });
-      if (currentCycle) cycles.push(currentCycle);
-      
-      console.log("Calculated Cycles:", cycles);
-      return cycles;
-    }
-
-    /* ==============================
-       UI RENDERING
-       ============================== */
-
-    // 3. DOM Thrashing Fix (Calendar)
-    function renderCalendar() {
-      const container = document.getElementById('calendar-container');
-      const flowDates = new Set(
-        appState.logs.filter(l => l.flow && l.flow !== 'None').map(l => l.date)
-      );
-      
-      // FIX: Use a string builder to compile the entire DOM update in memory first
-      let htmlString = '';
-      
-      // Generating a mock 31-day month for UI purposes
-      for (let i = 1; i <= 31; i++) {
-        const dateStr = `2023-10-${i.toString().padStart(2, '0')}`;
-        const isFlow = flowDates.has(dateStr);
-        // FIX: Using semantic <button> for interactive days
-        htmlString += `<button class="calendar-day ${isFlow ? 'flow' : ''}" aria-label="October ${i}">${i}</button>`;
-      }
-      
-      // One-time DOM insertion
-      container.innerHTML = htmlString;
-    }
-
-    // 4. SVG NaN Crash Fix (Chart)
-    function renderBBTChart() {
-      const container = document.getElementById('chart-container');
-      
-      // FIX: Strictly filter out null, undefined, or NaN values before math operations
-      const validLogs = appState.logs.filter(l => l.bbt != null && !isNaN(parseFloat(l.bbt)));
-      
-      if (validLogs.length < 2) {
-        container.innerHTML = '<div style="color: var(--subtext); margin: auto;">Not enough data points</div>';
-        return;
-      }
-
-      validLogs.sort((a, b) => parseLocal(a.date) - parseLocal(b.date));
-      
-      const bbtValues = validLogs.map(l => l.bbt);
-      const minBBT = Math.min(...bbtValues) - 0.2;
-      const maxBBT = Math.max(...bbtValues) + 0.2;
-      const range = maxBBT - minBBT || 1;
-
-      let points = validLogs.map((log, index) => {
-        const x = (index / (validLogs.length - 1)) * 100;
-        const y = 100 - (((log.bbt - minBBT) / range) * 100);
-        return `${x},${y}`;
-      }).join(' ');
-
-      // Safe SVG injection without NaN corruption
-      container.innerHTML = `
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-          <polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
-          ${validLogs.map((log, index) => {
-             const x = (index / (validLogs.length - 1)) * 100;
-             const y = 100 - (((log.bbt - minBBT) / range) * 100);
-             return `<circle cx="${x}" cy="${y}" r="2" fill="var(--bg)" stroke="var(--accent)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
-          }).join('')}
-        </svg>
-      `;
-    }
-
-    // 5. DOM Thrashing Fix (Vault)
-    function renderVault() {
-      const container = document.getElementById('vault-container');
-      
-      // FIX: Descending sort applied only for UI presentation, leaving math logic untouched
-      const sortedForUI = [...appState.logs].sort((a, b) => parseLocal(b.date) - parseLocal(a.date));
-      
-      let htmlString = '';
-      sortedForUI.forEach(log => {
-        htmlString += `
-          <div class="vault-item">
-            <div>
-              <strong>${log.date}</strong>
-              <div style="font-size: 14px; color: var(--subtext); margin-top: 4px;">Flow: ${log.flow}</div>
-            </div>
-            <div style="font-size: 18px; font-weight: 600;">
-              ${log.bbt ? log.bbt + '°' : '--'}
-            </div>
-          </div>
-        `;
-      });
-      container.innerHTML = htmlString;
-    }
-
-    /* ==============================
-       EVENT LISTENERS & MEMORY FIXES
-       ============================== */
-    
-    const layer = document.getElementById('layer');
-    const logDateInput = document.getElementById('logDate');
-    const flowSelect = document.getElementById('flowSelect');
-    const bbtInput = document.getElementById('bbtInput');
-
-    function openLayer() {
-      layer.classList.add('open');
-      layer.setAttribute('aria-hidden', 'false');
-      
-      // Pre-fill with today's local date properly formatted
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const dd = String(today.getDate()).padStart(2, '0');
-      logDateInput.value = `${yyyy}-${mm}-${dd}`;
-    }
-
-    function closeLayer() {
-      layer.classList.remove('open');
-      layer.setAttribute('aria-hidden', 'true');
-    }
-
-    // FIX: Bound statically outside of openLayer() to prevent duplicate binding memory leaks
-    logDateInput.addEventListener('change', (e) => {
-      console.log("Date changed to:", e.target.value);
-      // Future logic: hydrate form with existing data if selected date was already logged
-    });
-
-    document.getElementById('addLogBtn').addEventListener('click', openLayer);
-    document.getElementById('closeLayerBtn').addEventListener('click', closeLayer);
-    
-    document.getElementById('saveBtn').addEventListener('click', () => {
-      appState.logs.push({
-        date: logDateInput.value,
-        flow: flowSelect.value,
-        bbt: bbtInput.value ? parseFloat(bbtInput.value) : null
-      });
-      
-      closeLayer();
-      renderAll();
-    });
-
-    function renderAll() {
-      engineCalculate();
-      renderCalendar();
-      renderBBTChart();
-      renderVault();
-    }
-
-    // Initialize App
-    renderAll();
-
-    /* ==============================
-       INLINE SERVICE WORKER (PWA)
-       ============================== */
-    // FIX: Dynamically creates and registers a Service Worker to cache the App Shell for offline use.
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        const swCode = `
-          const CACHE_NAME = 'cycle-tracker-v1';
-          self.addEventListener('install', event => {
-            self.skipWaiting();
-            event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['/'])));
-          });
-          self.addEventListener('activate', event => {
-            event.waitUntil(self.clients.claim());
-          });
-          self.addEventListener('fetch', event => {
-            event.respondWith(
-              caches.match(event.request).then(response => {
-                return response || fetch(event.request);
-              })
-            );
-          });
-        `;
         
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(blob);
+        appState.calcCycle = parseInt(document.getElementById('ob-cycle').value) || 28;
+        appState.calcPeriod = parseInt(document.getElementById('ob-period').value) || 5;
+        appState.goal = document.getElementById('ob-goal').value;
         
-        navigator.serviceWorker.register(swUrl).then(registration => {
-          console.log('Inline ServiceWorker registered successfully:', registration.scope);
-        }).catch(err => {
-          console.error('ServiceWorker registration failed:', err);
+        // FIXED: parseLocalDate ensures correct midnight timestamp
+        if(d) appState.logs.push({date: d, timestamp: parseLocalDate(d).getTime(), flow: 'Medium', symptoms:[], meds:[], notes:''});
+        localStorage.setItem(DB_KEY, JSON.stringify(appState));
+        
+        document.getElementById('onboarding').style.opacity = '0';
+        setTimeout(() => { 
+            document.getElementById('onboarding').style.display = 'none'; 
+            document.getElementById('app-container').style.opacity = '1'; 
+            engineCalculate(); 
+            refreshUI(); 
+        }, 400);
+    }
+
+    /* JSON EXPORT/IMPORT */
+    function exportJSON() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState));
+        const a = document.createElement('a'); a.href = dataStr; a.download = `regle_data_${getTodayStr()}.json`; a.click(); showToast("Data Exported");
+    }
+    function importJSON(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) { try { appState = JSON.parse(e.target.result); localStorage.setItem(DB_KEY, JSON.stringify(appState)); location.reload(); } catch(err) { showToast("File Corrupted"); } };
+        reader.readAsText(file);
+    }
+
+    function switchTab(tabId, btn) { 
+        haptic(1); 
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); btn.classList.add('active'); 
+        document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active')); document.getElementById(tabId).classList.add('active'); 
+        if(tabId === 'tab-vault') renderVault();
+        refreshUI(); 
+    }
+    
+    // FIXED: Accept an optional dateStr parameter to allow calendar clicks to load past data
+    function openLayer(layerId, dateStr = null) {
+        haptic(1); 
+        const targetDateStr = dateStr || getTodayStr(); 
+        document.getElementById('logDate').value = targetDateStr; 
+        loadLog(targetDateStr); 
+        document.getElementById('logDate').onchange = (e) => loadLog(e.target.value); 
+        document.getElementById(layerId).classList.add('open'); 
+    }
+    
+    function closeLayer() { document.getElementById('logDrawer').classList.remove('open'); engineCalculate(); refreshUI(); }
+
+    /* HARD CYCLE RESET ENGINE */
+    function startNewPeriod() {
+        haptic(2);
+        const todayStr = getTodayStr();
+        appState.logs = appState.logs.filter(l => l.date !== todayStr);
+        // FIXED: parseLocalDate ensures correct timestamp
+        appState.logs.push({ date: todayStr, timestamp: parseLocalDate(todayStr).getTime(), flow: 'Medium', bbt: null, mucus: 'None', symptoms: [], meds: [], notes: '' });
+        appState.logs.sort((a, b) => b.timestamp - a.timestamp);
+        localStorage.setItem(DB_KEY, JSON.stringify(appState));
+        
+        showToast('New Cycle Started');
+        engineCalculate();
+        refreshUI();
+    }
+
+    function setupInteractions() {
+        const selectGroups = ['flowSelect', 'mucusSelect', 'symptomSelect'];
+        selectGroups.forEach(id => {
+            const el = document.getElementById(id);
+            if(!el) return;
+            el.addEventListener('click', (e) => {
+                const btn = e.target.closest('.chip'); if (!btn) return; haptic(1);
+                const val = btn.dataset.val;
+                
+                if(id === 'symptomSelect') {
+                    btn.classList.toggle('active');
+                    if(btn.classList.contains('active')) selectedData.symptoms.push(val);
+                    else selectedData.symptoms = selectedData.symptoms.filter(s => s !== val);
+                } else {
+                    const type = id.replace('Select', ''); selectedData[type] = val; 
+                    document.querySelectorAll(`#${id} .chip`).forEach(c => c.classList.toggle('active', c.dataset.val === val));
+                }
+            });
         });
-      });
     }
-  </script>
-</body>
-</html>
+
+    function loadLog(dateStr) {
+        selectedData = { flow: 'None', bbt: null, mucus: 'None', symptoms: [], meds: [], notes: '' };
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); 
+        document.getElementById('logBBT').value = '';
+        document.getElementById('logNotes').value = '';
+        
+        const existing = appState.logs.find(l => l.date === dateStr);
+        if (existing) {
+            selectedData = { 
+                flow: existing.flow || 'None', 
+                bbt: existing.bbt || null, 
+                mucus: existing.mucus || 'None', 
+                symptoms: existing.symptoms ? [...existing.symptoms] : [],
+                meds: existing.meds ? [...existing.meds] : [],
+                notes: existing.notes || ''
+            };
+            if(existing.flow) document.querySelector(`#flowSelect .chip[data-val="${existing.flow}"]`)?.classList.add('active');
+            if(existing.mucus) document.querySelector(`#mucusSelect .chip[data-val="${existing.mucus}"]`)?.classList.add('active');
+            if(existing.bbt) document.getElementById('logBBT').value = existing.bbt;
+            if(existing.notes) document.getElementById('logNotes').value = existing.notes;
+            
+            existing.symptoms?.forEach(s => {
+                let node = document.querySelector(`#symptomSelect .chip[data-val="${s}"]`);
+                if(node) node.classList.add('active');
+            });
+        }
+    }
+
+    function saveLog() {
+        const d = document.getElementById('logDate').value; 
+        if (!d || d > getTodayStr()) { showToast('Future dates cannot be logged.'); return; }
+        
+        selectedData.bbt = document.getElementById('logBBT').value ? parseFloat(document.getElementById('logBBT').value) : null;
+        selectedData.notes = document.getElementById('logNotes').value.trim();
+        
+        appState.logs = appState.logs.filter(l => l.date !== d);
+        
+        if (selectedData.flow !== 'None' || selectedData.bbt || selectedData.mucus !== 'None' || selectedData.symptoms.length > 0 || selectedData.notes !== '') {
+            // FIXED: Use local date parsing for timestamp integrity
+            appState.logs.push({ date: d, timestamp: parseLocalDate(d).getTime(), ...selectedData }); 
+            appState.logs.sort((a, b) => b.timestamp - a.timestamp);
+        }
+        localStorage.setItem(DB_KEY, JSON.stringify(appState)); showToast('Saved'); closeLayer();
+    }
+
+    /* MATH & VARIANCE ENGINE */
+    function engineCalculate() {
+        const flows = [...appState.logs].filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => a.timestamp - b.timestamp);
+        cycleHistoryData = []; 
+        if (flows.length === 0) return;
+        
+        let currentCycle = { start: flows[0], periodLen: 1, cycleLen: null, ovulated: false };
+        
+        for (let i = 1; i < flows.length; i++) {
+            const diffDays = (flows[i].timestamp - flows[i-1].timestamp) / 86400000;
+            // The engine naturally registers a new cycle when a flow is logged after a 5+ day gap
+            if (diffDays > 5) { 
+                currentCycle.cycleLen = (flows[i].timestamp - currentCycle.start.timestamp) / 86400000; 
+                cycleHistoryData.push(currentCycle);
+                currentCycle = { start: flows[i], periodLen: 1, cycleLen: null, ovulated: false };
+            } else { 
+                currentCycle.periodLen = Math.max(currentCycle.periodLen, Math.floor((flows[i].timestamp - currentCycle.start.timestamp)/86400000) + 1); 
+            }
+        }
+        cycleHistoryData.push(currentCycle); 
+        
+        let validLens = [];
+        cycleHistoryData.forEach(c => { if (c.cycleLen && c.cycleLen >= 15) validLens.push(c.cycleLen); });
+        
+        if (validLens.length > 0) {
+            let sum = validLens.reduce((a, b) => a + b, 0);
+            let mean = sum / validLens.length;
+            appState.calcCycle = Math.round(mean);
+            
+            // Standard Deviation Math
+            let varianceSq = validLens.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / validLens.length;
+            let stdDev = Math.sqrt(varianceSq);
+            document.getElementById('stat-avg-cycle').innerText = `${appState.calcCycle}d`;
+            document.getElementById('stat-variance').innerText = `±${stdDev.toFixed(1)}d`;
+        } else {
+            document.getElementById('stat-avg-cycle').innerText = `${appState.calcCycle}d`;
+            document.getElementById('stat-variance').innerText = `--`;
+        }
+    }
+
+    function refreshUI() {
+        let dayOfCycle = 1;
+        
+        // FIXED: Math now uses the start of the CURRENT cycle, rather than the most recent bleeding day
+        if(cycleHistoryData && cycleHistoryData.length > 0) {
+            const latestCycle = cycleHistoryData[cycleHistoryData.length - 1];
+            const cycleStartLocal = parseLocalDate(latestCycle.start.date);
+            const todayLocal = parseLocalDate(getTodayStr());
+            
+            dayOfCycle = Math.floor((todayLocal - cycleStartLocal) / 86400000) + 1;
+            document.getElementById('heroDays').innerText = dayOfCycle > 0 ? dayOfCycle : 1;
+            
+            const C = 2 * Math.PI * 90; 
+            document.getElementById('svg-period').style.strokeDashoffset = C - ((appState.calcPeriod / appState.calcCycle) * C);
+            let dayFraction = (dayOfCycle - 1) / appState.calcCycle; 
+            document.getElementById('svg-tracker').style.strokeDasharray = `15 ${C}`;
+            document.getElementById('svg-tracker').style.strokeDashoffset = C - (Math.min(dayFraction, 1) * C);
+
+            let phaseKey = 'luteal'; // Default for days beyond 30
+            for (const [key, data] of Object.entries(phaseDatabase)) { if (data.days.includes(dayOfCycle)) { phaseKey = key; break; } }
+            const pData = phaseDatabase[phaseKey];
+            const contentHTML = isPartnerMode ? pData.partner : pData.personal;
+            
+            document.getElementById('dynamic-phase-content').innerHTML = `
+                <div class="card card-highlight" style="padding-bottom: 20px;">
+                    <h3 style="color:var(--text); margin-bottom:5px;">${pData.name}</h3>
+                    <p style="color:var(--accent); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom: 5px;">${pData.subtitle}</p>
+                    ${contentHTML}
+                </div>`;
+        }
+        renderCalendar(); 
+        renderWaveInsights(dayOfCycle); 
+        renderBBTChart();
+        renderHeatmap();
+    }
+
+    function renderWaveInsights(day) {
+        const w = document.getElementById('hormone-wave-container').clientWidth || 300; const h = 180;
+        let estPath = `M 0 ${h}`, progPath = `M 0 ${h}`;
+        for(let i=0; i<=w; i+=5) {
+            const mappedDay = (i/w) * 28; 
+            let estVal = Math.sin(mappedDay/28 * Math.PI) * 50; if(mappedDay > 6 && mappedDay < 15) estVal += 40;
+            let progVal = mappedDay > 14 ? 10 + (Math.sin((mappedDay-14)/14 * Math.PI) * 80) : 10;
+            estPath += ` L ${i} ${h - (estVal/100 * h)}`; progPath += ` L ${i} ${h - (progVal/100 * h)}`;
+        }
+        let ind = Math.min((day / appState.calcCycle) * w, w);
+        document.getElementById('hormone-wave-container').innerHTML = `<svg class="svg-chart" viewBox="0 0 ${w} ${h}"><path class="wave-path" stroke="var(--estrogen)" d="${estPath}"></path><path class="wave-path" stroke="var(--progesterone)" d="${progPath}"></path><line x1="${ind}" y1="0" x2="${ind}" y2="${h}" stroke="#fff" stroke-dasharray="2 2"></line><text x="${ind}" y="15" fill="#fff" font-size="10">DAY ${day}</text></svg>`;
+    }
+
+    /* BBT CHART RENDERING ENGINE */
+    function renderBBTChart() {
+        const w = document.getElementById('bbt-chart-container').clientWidth || 300; 
+        const h = 160;
+        const pad = 20;
+        
+        if(cycleHistoryData.length === 0) return;
+        const currentCycleStart = cycleHistoryData[cycleHistoryData.length - 1].start.timestamp;
+        
+        const cycleLogs = appState.logs
+            .filter(l => l.timestamp >= currentCycleStart && l.bbt != null)
+            .sort((a,b) => a.timestamp - b.timestamp);
+            
+        if(cycleLogs.length < 2) {
+            document.getElementById('bbt-chart-container').innerHTML = `<svg class="svg-chart" viewBox="0 0 ${w} ${h}"><text x="${w/2}" y="${h/2}" fill="var(--subtext)" font-size="12" text-anchor="middle">Log BBT 2+ times to see graph.</text></svg>`;
+            return;
+        }
+
+        let minTemp = Math.min(...cycleLogs.map(l => l.bbt)) - 0.2;
+        let maxTemp = Math.max(...cycleLogs.map(l => l.bbt)) + 0.2;
+        
+        let pathD = "";
+        let pointsHTML = "";
+        
+        cycleLogs.forEach((l, index) => {
+            const dayOfCycle = Math.floor((l.timestamp - currentCycleStart)/86400000) + 1;
+            const x = pad + ((dayOfCycle / appState.calcCycle) * (w - pad*2));
+            const boundedX = Math.min(x, w - pad);
+            const y = h - pad - (((l.bbt - minTemp) / (maxTemp - minTemp)) * (h - pad*2));
+            
+            if(index === 0) pathD += `M ${boundedX} ${y} `;
+            else pathD += `L ${boundedX} ${y} `;
+            
+            pointsHTML += `<circle class="bbt-point" cx="${boundedX}" cy="${y}" r="4"></circle>`;
+            if(index === 0 || index === cycleLogs.length -1) {
+                pointsHTML += `<text x="${boundedX}" y="${y - 10}" fill="var(--subtext)" font-size="9" text-anchor="middle">${l.bbt}</text>`;
+            }
+        });
+
+        document.getElementById('bbt-chart-container').innerHTML = `<svg class="svg-chart" viewBox="0 0 ${w} ${h}">
+            <line x1="${pad}" y1="${h/2}" x2="${w-pad}" y2="${h/2}" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4 4"></line>
+            <path class="bbt-path" d="${pathD}"></path>
+            ${pointsHTML}
+        </svg>`;
+    }
+
+    /* SVG SYMPTOM HEATMAP GENERATOR */
+    function renderHeatmap() {
+        const w = document.getElementById('heatmap-container').clientWidth || 300; const h = 150;
+        const sympCounts = {};
+        appState.logs.forEach(l => { if(l.symptoms) l.symptoms.forEach(s => { sympCounts[s] = (sympCounts[s] || 0) + 1; }); });
+        
+        let svg = `<svg class="svg-chart" viewBox="0 0 ${w} ${h}">`;
+        const keys = Object.keys(sympCounts);
+        if(keys.length === 0) { svg += `<text x="${w/2}" y="${h/2}" fill="var(--subtext)" font-size="12" text-anchor="middle">Log symptoms to see heatmap.</text></svg>`; } 
+        else {
+            const topKeys = keys.sort((a,b) => sympCounts[b] - sympCounts[a]).slice(0, 6);
+            const max = Math.max(...topKeys.map(k => sympCounts[k])); 
+            const barW = (w / topKeys.length) - 10;
+            
+            topKeys.forEach((k, i) => {
+                const barH = (sympCounts[k] / max) * (h - 30);
+                svg += `<rect class="heatmap-rect" x="${i*(barW+10) + 5}" y="${h - 20 - barH}" width="${barW}" height="${barH}" fill="var(--accent)"></rect>`;
+                svg += `<text x="${i*(barW+10) + 5 + barW/2}" y="${h - 5}" fill="var(--text)" font-size="10" text-anchor="middle">${k.substring(0,6)}</text>`;
+            });
+            svg += `</svg>`;
+        }
+        document.getElementById('heatmap-container').innerHTML = svg;
+    }
+
+    /* VAULT RENDERING */
+    function renderVault() {
+        const container = document.getElementById('vault-list');
+        if(appState.logs.length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:var(--subtext); padding:40px;">No records established.</div>`;
+            return;
+        }
+        
+        let html = "";
+        const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        
+        const sortedLogs = [...appState.logs].sort((a,b) => b.timestamp - a.timestamp);
+        
+        sortedLogs.forEach(log => {
+            const dateObj = parseLocalDate(log.date);
+            const d = dateObj.getDate();
+            const m = months[dateObj.getMonth()];
+            
+            let tagHTML = "";
+            if(log.bbt) tagHTML += `<span class="timeline-tag">🌡️ ${log.bbt}</span>`;
+            if(log.mucus && log.mucus !== 'None') tagHTML += `<span class="timeline-tag">💧 ${log.mucus}</span>`;
+            log.symptoms?.forEach(s => tagHTML += `<span class="timeline-tag">${s}</span>`);
+            
+            let flowText = log.flow !== 'None' ? `Flow: ${log.flow}` : 'Observation Log';
+            let noteHTML = log.notes ? `<div class="timeline-note">${log.notes}</div>` : '';
+
+            html += `
+            <div class="timeline-item">
+                <div class="timeline-date">
+                    <div class="timeline-day">${d}</div>
+                    <div class="timeline-month">${m}</div>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-flow">${flowText}</div>
+                    <div class="timeline-tags">${tagHTML}</div>
+                    ${noteHTML}
+                </div>
+            </div>`;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    /* CALENDAR RENDERING */
+    // FIXED: Prevent Month skipping on the 31st by explicitly setting date to the 1st
+    function changeMonth(delta) { 
+        currentCalDate.setDate(1); 
+        currentCalDate.setMonth(currentCalDate.getMonth() + delta); 
+        renderCalendar(); 
+    }
+    
+    function renderCalendar() {
+        const y = currentCalDate.getFullYear(); const m = currentCalDate.getMonth();
+        document.getElementById('calMonthYear').innerText = new Date(y, m).toLocaleString('default', { month: 'long', year: 'numeric' });
+        const cal = document.getElementById('calDays'); cal.innerHTML = ['S','M','T','W','T','F','S'].map(d => `<div class="weekday">${d}</div>`).join('');
+        for (let i = 0; i < new Date(y, m, 1).getDay(); i++) cal.innerHTML += `<div></div>`;
+        
+        const todayStr = getTodayStr();
+        
+        let predictedSet = new Set();
+        
+        // FIXED: Prediction engine now correctly uses the start date of the MOST RECENT cycle
+        if(cycleHistoryData.length > 0) {
+            const latestCycle = cycleHistoryData[cycleHistoryData.length - 1];
+            const lastStart = parseLocalDate(latestCycle.start.date);
+            
+            for(let i=1; i<=3; i++) {
+                const n = new Date(lastStart); n.setDate(n.getDate() + (appState.calcCycle * i));
+                for(let p=0; p<appState.calcPeriod; p++) { 
+                    const pDay = new Date(n); 
+                    pDay.setDate(pDay.getDate() + p); 
+                    predictedSet.add(formatLocalDate(pDay)); // FIXED: Safely formats local date to avoid toISOString timezone offset
+                }
+            }
+        }
+        
+        for (let i = 1; i <= new Date(y, m + 1, 0).getDate(); i++) {
+            const dStr = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            let cls = 'day current-month'; if (dStr === todayStr) cls += ' today';
+            
+            let hasLog = appState.logs.find(l => l.date === dStr && (l.flow !== 'None' || l.bbt || l.mucus !== 'None' || (l.symptoms && l.symptoms.length>0) || l.notes));
+            if (hasLog) cls += ' logged';
+            if (predictedSet.has(dStr) && dStr > todayStr) cls += ' predicted'; 
+            
+            // Disable clicks and visually dim dates in the future
+            if(dStr > todayStr) {
+                cal.innerHTML += `<div class="${cls}" style="opacity:0.3; pointer-events:none;">${i}</div>`;
+            } else {
+                // FIXED: Calendar clicks now pass the target date to the drawer rather than defaulting to today
+                cal.innerHTML += `<div class="${cls}" onclick="openLayer('logDrawer', '${dStr}')">${i}</div>`;
+            }
+        }
+    }
