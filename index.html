@@ -149,7 +149,7 @@
     <div class="brand-logo-boot">Règle</div>
 </div>
 
-<!-- ELEGANT ONBOARDING (No "Engine Calibration" jargon) -->
+<!-- ELEGANT ONBOARDING -->
 <div id="onboarding" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--bg); z-index:5000; padding:calc(40px + var(--safetv)) 20px 20px; display:none; flex-direction:column; opacity:0; transition:opacity 0.4s; overflow-y:auto;">
     
     <div style="text-align: center; margin-bottom: 40px; margin-top: 10px;">
@@ -367,6 +367,15 @@
 </div>
 
 <script>
+    // Robust local timezone parser to fix native date-picker UTC shifts
+    function getTodayStr() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
     function haptic(type = 1) { if (navigator.vibrate) { if (type === 1) navigator.vibrate(20); else navigator.vibrate([30, 20, 30]); } }
     function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
     function executeWipe() { localStorage.clear(); location.reload(); }
@@ -379,8 +388,9 @@
     let isPartnerMode = false;
 
     document.addEventListener('DOMContentLoaded', () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('ob-date').max = today; document.getElementById('logDate').max = today;
+        const todayStr = getTodayStr();
+        document.getElementById('ob-date').max = todayStr; 
+        document.getElementById('logDate').max = todayStr;
         
         const boot = document.getElementById('boot-screen'); 
         const ob = document.getElementById('onboarding');
@@ -406,7 +416,7 @@
                 } else { 
                     ob.style.display = 'flex'; 
                     setTimeout(()=> ob.style.opacity = '1', 50); 
-                    document.getElementById('ob-date').value = today; 
+                    document.getElementById('ob-date').value = todayStr; 
                 }
             }, 600); 
         }, 1200); 
@@ -552,6 +562,13 @@
 
     function finishOb() {
         const d = document.getElementById('ob-date').value;
+        const todayStr = getTodayStr();
+        
+        if (d && d > todayStr) { 
+            showToast('Cannot select a future date.'); 
+            return; 
+        }
+        
         appState.calcCycle = parseInt(document.getElementById('ob-cycle').value) || 28;
         appState.calcPeriod = parseInt(document.getElementById('ob-period').value) || 5;
         appState.goal = document.getElementById('ob-goal').value;
@@ -571,7 +588,7 @@
     /* JSON EXPORT/IMPORT */
     function exportJSON() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState));
-        const a = document.createElement('a'); a.href = dataStr; a.download = `regle_data_${new Date().toISOString().split('T')[0]}.json`; a.click(); showToast("Data Exported");
+        const a = document.createElement('a'); a.href = dataStr; a.download = `regle_data_${getTodayStr()}.json`; a.click(); showToast("Data Exported");
     }
     function importJSON(event) {
         const file = event.target.files[0]; if (!file) return;
@@ -589,8 +606,10 @@
     }
     
     function openLayer(layerId) {
-        haptic(1); const todayStr = new Date().toISOString().split('T')[0]; 
-        document.getElementById('logDate').value = todayStr; loadLog(todayStr); 
+        haptic(1); 
+        const todayStr = getTodayStr(); 
+        document.getElementById('logDate').value = todayStr; 
+        loadLog(todayStr); 
         document.getElementById('logDate').onchange = (e) => loadLog(e.target.value); 
         document.getElementById(layerId).classList.add('open'); 
     }
@@ -600,7 +619,7 @@
     /* HARD CYCLE RESET ENGINE */
     function startNewPeriod() {
         haptic(2);
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getTodayStr();
         appState.logs = appState.logs.filter(l => l.date !== todayStr);
         appState.logs.push({ date: todayStr, timestamp: new Date(todayStr).getTime(), flow: 'Medium', bbt: null, mucus: 'None', symptoms: [], meds: [], notes: '' });
         appState.logs.sort((a, b) => b.timestamp - a.timestamp);
@@ -661,7 +680,8 @@
     }
 
     function saveLog() {
-        const d = document.getElementById('logDate').value; if (!d || d > new Date().toISOString().split('T')[0]) { showToast('Future dates blocked.'); return; }
+        const d = document.getElementById('logDate').value; 
+        if (!d || d > getTodayStr()) { showToast('Future dates cannot be logged.'); return; }
         
         selectedData.bbt = document.getElementById('logBBT').value ? parseFloat(document.getElementById('logBBT').value) : null;
         selectedData.notes = document.getElementById('logNotes').value.trim();
@@ -879,7 +899,8 @@
         document.getElementById('calMonthYear').innerText = new Date(y, m).toLocaleString('default', { month: 'long', year: 'numeric' });
         const cal = document.getElementById('calDays'); cal.innerHTML = ['S','M','T','W','T','F','S'].map(d => `<div class="weekday">${d}</div>`).join('');
         for (let i = 0; i < new Date(y, m, 1).getDay(); i++) cal.innerHTML += `<div></div>`;
-        const todayStr = new Date().toISOString().split('T')[0];
+        
+        const todayStr = getTodayStr();
         
         let predictedSet = new Set(); const flows = appState.logs.filter(l => l.flow !== 'None' && l.flow !== 'Spotting').sort((a, b) => b.timestamp - a.timestamp);
         if(flows.length > 0) {
@@ -897,7 +918,12 @@
             if (hasLog) cls += ' logged';
             if (predictedSet.has(dStr) && dStr > todayStr) cls += ' predicted'; 
             
-            cal.innerHTML += `<div class="${cls}" ${dStr <= todayStr ? `onclick="openLayer('logDrawer'); document.getElementById('logDate').value='${dStr}'; loadLog('${dStr}');"` : `style="opacity:0.6;"`}>${i}</div>`;
+            // Disable clicks and visually dim dates in the future
+            if(dStr > todayStr) {
+                cal.innerHTML += `<div class="${cls}" style="opacity:0.3; pointer-events:none;">${i}</div>`;
+            } else {
+                cal.innerHTML += `<div class="${cls}" onclick="openLayer('logDrawer'); document.getElementById('logDate').value='${dStr}'; loadLog('${dStr}');">${i}</div>`;
+            }
         }
     }
 </script>
